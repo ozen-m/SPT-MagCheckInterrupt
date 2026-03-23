@@ -1,0 +1,34 @@
+<Project>
+  <PropertyGroup>
+    <!-- Paths -->
+    <SPTPath Condition=" '$(SPTPath)' == '' ">$(SolutionDir)..\..\</SPTPath>
+    <ClientProjectName>""</ClientProjectName>
+  </PropertyGroup>
+
+  <Target Name="CopyOutput" AfterTargets="Build">
+    <!-- To SPT Dir -->
+    <Copy SourceFiles="@(ModRoot)" DestinationFolder="$(SPTPath)$(DestDir)" Condition="@(ModRoot.Count) != 0" />
+    <Copy SourceFiles="@(PDB)" DestinationFolder="$(SPTPath)$(DestDir)" Condition="'$(Configuration)' == 'Debug' AND @(PDB.Count) != 0" />
+    <Copy SourceFiles="@(Config)" DestinationFolder="$(SPTPath)$(DestDir)\config\%(RecursiveDir)" Condition="@(Config.Count) != 0" />
+    <Copy SourceFiles="@(Bundles)" DestinationFolder="$(SPTPath)$(DestDir)\bundles\%(RecursiveDir)" Condition="@(Bundles.Count) != 0" />
+
+    <!-- Release -->
+    <Copy
+      SourceFiles="@(ModRoot)"
+      DestinationFolder="$(SolutionDir)Dist\$(Authors)-$(RootNamespace)\$(DestDir)"
+      Condition="'$(Configuration)' == 'Release' AND @(ModRoot.Count) != 0" />
+    <Copy
+      SourceFiles="@(Config)"
+      DestinationFolder="$(SolutionDir)Dist\$(Authors)-$(RootNamespace)\$(DestDir)\config\%(RecursiveDir)"
+      Condition="'$(Configuration)' == 'Release' AND @(Config.Count) != 0" />
+    <Copy
+      SourceFiles="@(Bundles)"
+      DestinationFolder="$(SolutionDir)Dist\$(Authors)-$(RootNamespace)\$(DestDir)\bundles\%(RecursiveDir)"
+      Condition="'$(Configuration)' == 'Release' AND @(Bundles.Count) != 0" />
+    <ZipDirectory
+      SourceDirectory="$(SolutionDir)Dist\$(Authors)-$(RootNamespace)"
+      DestinationFile="$(SolutionDir)Dist\$(Authors)-$(RootNamespace)-$(Version).zip"
+      Overwrite="true"
+      Condition="'$(Configuration)' == 'Release'" />
+  </Target>
+</Project>

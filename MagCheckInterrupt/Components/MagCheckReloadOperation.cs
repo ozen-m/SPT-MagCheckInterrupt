@@ -92,7 +92,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             _targetSpeed,
             MagCheckInterrupt.SlowSmoothing.Value * deltaTime
         );
-        FirearmsAnimator_0.SetAnimationSpeed(_currentSpeed);
+        FirearmsAnimator_0.SetAnimationSpeed(_currentSpeed); // Set every frame okay?
     }
 
     public override void Reset()
@@ -128,23 +128,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     )
     {
         LoggerUtil.Debug("MagCheckReloadOperation::ReloadMag");
-        AmmoDetailsPatch.HideAmmoCount();
-        ReloadAnimationPatch.SkipReloadAnimation();
         FirearmsAnimator_0.SetAnimationSpeed(1f);
-
-        FirearmsAnimator_0.SetCanReload(true); // Set to true to insert next mag since we skipped reload animation
-        if (FirearmsAnimator_0.Animator is not GClass1446 animatorWrapper)
-        {
-            const string errorMessage = "FirearmsAnimator_0.Animator is not GClass1446";
-            LoggerUtil.Warning(errorMessage);
-            finishCallback?.Invoke(new FailedResult(errorMessage));
-            return;
-        }
-        animatorWrapper.Animator_0.CrossFade(
-            525784070, // Hash for RELOAD OUT
-            0.25f,
-            FirearmsAnimator.HANDS_LAYER_INDEX,
-            0.50f); // Skip mag out anim from weapon
 
         var reloadResult = FirearmController.GClass2006.Run(
             Player_0.InventoryController,
@@ -154,21 +138,39 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             Weapon_0.MalfState.IsKnownMalfunction(Player_0.ProfileId),
             itemAddress
         );
-        if (reloadResult.Succeeded)
+        if (reloadResult.Failed)
         {
-            State = EOperationState.Finished;
-            FirearmController_0
-                .InitiateOperation<FirearmController.GClass2016>()
-                .Start(reloadResult.Value, finishCallback);
-            startCallback?.Succeed();
+            LoggerUtil.Error(
+                $"MagCheckReloadOperation::ReloadMag Failed to run ReloadMag. Error: {reloadResult.Error}"
+            );
+            finishCallback?.Invoke(reloadResult);
+            return;
+        }
+
+        if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper)
+        {
+            ReloadAnimationPatch.SkipReloadAnimation();
+            animatorWrapper.Animator_0.CrossFade(
+                525784070, // Hash for `RELOAD OUT`
+                0.25f,
+                FirearmsAnimator.HANDS_LAYER_INDEX,
+                0.50f // Skip mag out anim from weapon
+            );
         }
         else
         {
+            var typeFullName = FirearmsAnimator_0.Animator.GetType().FullName;
             LoggerUtil.Warning(
-                $"ExtendedCheckMagOperation::ReloadMag Failed to run ReloadMag. Error: {reloadResult.Error}"
+                $"MagCheckReloadOperation::ReloadMag Cannot transition directly into a reload. {typeFullName}"
             );
-            finishCallback?.Invoke(reloadResult);
         }
+
+        AmmoDetailsPatch.HideAmmoCount();
+        State = EOperationState.Finished;
+        FirearmController_0
+            .InitiateOperation<FirearmController.GClass2016>()
+            .Start(reloadResult.Value, finishCallback);
+        startCallback?.Succeed();
     }
 
     public override void SetInventoryOpened(bool opened)

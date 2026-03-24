@@ -152,7 +152,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             ReloadAnimationPatch.SkipReloadAnimation();
             animatorWrapper.Animator_0.CrossFade(
                 525784070, // Hash for `RELOAD OUT`
-                0.25f,
+                0.10f, // Note: Anything more than 0.10f looks like a magazine swap
                 FirearmsAnimator.HANDS_LAYER_INDEX,
                 0.50f // Skip mag out anim from weapon
             );

@@ -1,5 +1,6 @@
 ﻿using Comfort.Common;
 using EFT.InventoryLogic;
+using MagCheckInterrupt.External;
 using MagCheckInterrupt.Patches;
 using MagCheckInterrupt.Utils;
 using UnityEngine;
@@ -19,7 +20,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     private SpeedState _animSpeedState = SpeedState.Normal;
 
 #if DEBUG
-    private AnimationDebugUI _animationDebugUI;
+    private static AnimationDebugUI _animationDebugUI;
 #endif
 
     public new void Start(EUtilityType utilityType)
@@ -27,7 +28,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         base.Start(utilityType);
 
 #if DEBUG
-        LoggerUtil.Debug("CheckMagReloadOperation::Start");
+        LoggerUtil.Debug("MagCheckReloadOperation::Start");
         if (_animationDebugUI == null)
         {
             _animationDebugUI = AnimationDebugUI.Create(Player_0.gameObject, FirearmsAnimator_0, FirearmController_0);
@@ -56,7 +57,11 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         // Show ammo details at the start of the reload window
         if (!_ammoDetailsShown && normalizedTime > MagCheckInterrupt.ReloadWindowStart.Value)
         {
-            AmmoDetailsPatch.ShowLastAmmoDetail();
+            if (Player_0.FirstPersonPointOfView)
+            {
+                AmmoDetailsPatch.ShowLastAmmoDetail();
+            }
+
             _ammoDetailsShown = true;
         }
 
@@ -149,12 +154,14 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
         if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper)
         {
+            // GClass2016.Start calls FirearmsAnimator.Reload(bool b)
+            // so we need to skip the reload animation and do our own crossfade
             ReloadAnimationPatch.SkipReloadAnimation();
             animatorWrapper.Animator_0.CrossFade(
                 525784070, // Hash for `RELOAD OUT`
                 0.10f, // Note: Anything more than 0.10f looks like a magazine swap
                 FirearmsAnimator.HANDS_LAYER_INDEX,
-                0.50f // Skip mag out anim from weapon
+                0.50f // Skip mag out from weapon animation
             );
         }
         else
@@ -165,7 +172,11 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             );
         }
 
-        AmmoDetailsPatch.HideAmmoCount();
+        if (Player_0.FirstPersonPointOfView)
+        {
+            AmmoDetailsPatch.HideAmmoCount();
+        }
+
         State = EOperationState.Finished;
         FirearmController_0
             .InitiateOperation<FirearmController.GClass2016>()
@@ -181,8 +192,25 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
     public override void FastForward()
     {
+        // Fika runs FastForward before calling ReloadMag,
+        // so we need to check if FirearmController is Fika's ObservedFirearmController
+        // or else it finishes this operation and ReloadMag won't be called.
+        // TODO: Could pose problems if FastForward is really needed.
+        LoggerUtil.Debug("MagCheckReloadOperation::FastForward");
+        if (Fika.IsObservedFirearmController(FirearmController_0))
+        {
+            LoggerUtil.Debug("MagCheckReloadOperation::FastForward Skipped FastForward");
+            return;
+        }
+
         State = EOperationState.Ready;
         OnIdleStartEvent();
+    }
+
+    public override void OnIdleStartEvent()
+    {
+        LoggerUtil.Debug("MagCheckReloadOperation::OnIdleStartEvent");
+        base.OnIdleStartEvent();
     }
 
     /// <summary>

@@ -30,7 +30,7 @@ public class RunUtilityOpPatch : ModulePatch
             return true;
         }
 
-        if (!__instance.Player_0.FirstPersonPointOfView)
+        if (__instance.Player_0.IsAI)
         {
             return true;
         }
@@ -38,7 +38,11 @@ public class RunUtilityOpPatch : ModulePatch
         if (!WeaponUsesExternalMag(__instance.Weapon_0))
         {
             // Show ammo details since we skip it through `AmmoDetailsPatch`
-            AmmoDetailsPatch.ShowLastAmmoDetail();
+            if (__instance.Player_0.FirstPersonPointOfView)
+            {
+                AmmoDetailsPatch.ShowLastAmmoDetail();
+            }
+
             return true;
         }
 

@@ -6,6 +6,7 @@ using SPT.Reflection.Patching;
 namespace MagCheckInterrupt;
 
 [BepInPlugin("com.ozen.magcheckinterrupt", "Mag Check Interrupt", "1.0.0")]
+[BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
 public class MagCheckInterrupt : BaseUnityPlugin
 {
     public static ManualLogSource LogSource { get; private set; }

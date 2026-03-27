@@ -28,6 +28,10 @@
       <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Fika.Core">
+      <HintPath>..\references\Fika.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="ItemComponent.Types">
       <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll</HintPath>
       <Private>false</Private>
@@ -64,6 +68,14 @@
       <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MagCheckInterrupt.Net\MagCheckInterrupt.Net.csproj" />
   </ItemGroup>
 
   <Target Name="SetOutput" AfterTargets="Build">

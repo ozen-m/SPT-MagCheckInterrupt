@@ -1,6 +1,5 @@
 ﻿using Comfort.Common;
 using EFT.InventoryLogic;
-using MagCheckInterrupt.External;
 using MagCheckInterrupt.Patches;
 using MagCheckInterrupt.Utils;
 using UnityEngine;
@@ -13,6 +12,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     private static readonly int _checkAnimationHash = Animator.StringToHash("CHECK");
 
     private bool _ammoDetailsShown;
+    private bool _toReload;
 
     // Slow down animation fields
     private float _currentSpeed = 1f;
@@ -55,7 +55,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         var normalizedTime = currentStateInfo.normalizedTime;
 
         // Show ammo details at the start of the reload window
-        if (!_ammoDetailsShown && normalizedTime > MagCheckInterrupt.ReloadWindowStart.Value)
+        if (!_ammoDetailsShown && normalizedTime > ConfigUtil.ReloadWindowStart.Value)
         {
             if (Player_0.FirstPersonPointOfView)
             {
@@ -65,7 +65,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             _ammoDetailsShown = true;
         }
 
-        if (!MagCheckInterrupt.SlowAnimation.Value)
+        if (!ConfigUtil.SlowAnimation.Value)
         {
             return;
         }
@@ -73,14 +73,14 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         switch (_animSpeedState)
         {
             case SpeedState.Normal:
-                if (normalizedTime > MagCheckInterrupt.SlowAnimationStart.Value)
+                if (normalizedTime > ConfigUtil.SlowAnimationStart.Value)
                 {
-                    _targetSpeed = MagCheckInterrupt.SlowPercentage.Value;
+                    _targetSpeed = ConfigUtil.SlowPercentage.Value;
                     _animSpeedState = SpeedState.Slowed;
                 }
                 break;
             case SpeedState.Slowed:
-                if (normalizedTime >= MagCheckInterrupt.SlowAnimationEnd.Value)
+                if (normalizedTime >= ConfigUtil.SlowAnimationEnd.Value)
                 {
                     _targetSpeed = 1f;
                     _animSpeedState = SpeedState.Restored;
@@ -95,7 +95,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         _currentSpeed = Mathf.MoveTowards(
             _currentSpeed,
             _targetSpeed,
-            MagCheckInterrupt.SlowSmoothing.Value * deltaTime
+            ConfigUtil.SlowSmoothing.Value * deltaTime
         );
         FirearmsAnimator_0.SetAnimationSpeed(_currentSpeed); // Set every frame okay?
     }
@@ -103,6 +103,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     public override void Reset()
     {
         _ammoDetailsShown = false;
+        _toReload = false;
         _animSpeedState = SpeedState.Normal;
         _currentSpeed = 1f;
         _targetSpeed = 1f;
@@ -117,8 +118,8 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         var normalizedTime = currentStateInfo.normalizedTime;
 
         return IsInCheckAnimation(currentStateInfo)
-               && normalizedTime > MagCheckInterrupt.ReloadWindowStart.Value
-               && normalizedTime < MagCheckInterrupt.ReloadWindowEnd.Value;
+               && normalizedTime > ConfigUtil.ReloadWindowStart.Value
+               && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
     }
 
     /// <summary>
@@ -193,11 +194,9 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     public override void FastForward()
     {
         // Fika runs FastForward before calling ReloadMag,
-        // so we need to check if FirearmController is Fika's ObservedFirearmController
-        // or else it finishes this operation and ReloadMag won't be called.
-        // TODO: Could pose problems if FastForward is really needed.
+        // so we need a packet to set _toReload or else it finishes this operation and ReloadMag won't be called.
         LoggerUtil.Debug("MagCheckReloadOperation::FastForward");
-        if (Fika.IsObservedFirearmController(FirearmController_0))
+        if (_toReload)
         {
             LoggerUtil.Debug("MagCheckReloadOperation::FastForward Skipped FastForward");
             return;
@@ -212,6 +211,8 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         LoggerUtil.Debug("MagCheckReloadOperation::OnIdleStartEvent");
         base.OnIdleStartEvent();
     }
+
+    public void SetToReload() => _toReload = true;
 
     /// <summary>
     /// AnimatorStateInfoWrapper.IsName(string name)

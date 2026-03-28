@@ -45,11 +45,11 @@ public static class ConfigUtil
                             richText = true,
                             wordWrap = true,
                             alignment = TextAnchor.MiddleCenter,
-                            fontSize = 18
+                            fontSize = 18,
                         };
 
                         GUILayout.Label("\n<color=#4DA6FF><b>Settings are set by the Fika Host</b></color>", _centeredStyle);
-                    }
+                    },
                 }
             )
         );
@@ -169,8 +169,13 @@ public static class ConfigUtil
     {
         if (values.Length != _allConfigs.Count)
         {
-            LoggerUtil.Error($"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_allConfigs.Count}");
-            NotificationManagerClass.DisplayWarningNotification("MagCheckInterrupt: Unable to set config values. Different mod version with the host?", ENotificationDurationType.Long);
+            LoggerUtil.Error(
+                $"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_allConfigs.Count}"
+            );
+            NotificationManagerClass.DisplayWarningNotification(
+                "MagCheckInterrupt: Unable to set config values. Different mod version with the host?",
+                ENotificationDurationType.Long
+            );
             return false;
         }
 

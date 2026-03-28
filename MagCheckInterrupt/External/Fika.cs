@@ -133,16 +133,12 @@ public class ReloadMagPatch : ModulePatch
     }
 
     [PatchPrefix]
-    protected static void Prefix(MagCheckReloadOperation __instance, ref Callback startCallback
-    )
+    protected static void Prefix(MagCheckReloadOperation __instance, ref Callback startCallback)
     {
         if (!__instance.Player_0.IsYourPlayer) return;
 
         // We need our packet sent first before Fika's reload packet
-        startCallback = (Callback)Delegate.Combine(
-            (Callback)SendMagInterruptPacket,
-            startCallback
-        );
+        startCallback = (Callback)Delegate.Combine((Callback)SendMagInterruptPacket, startCallback);
     }
 
     private static void SendMagInterruptPacket(IResult result)

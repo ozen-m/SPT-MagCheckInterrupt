@@ -10,6 +10,9 @@ namespace MagCheckInterrupt.Components;
 public class MagCheckReloadOperation(FirearmController controller) : FirearmController.GClass2038(controller)
 {
     private static readonly int _checkAnimationHash = Animator.StringToHash("CHECK");
+#if DEBUG
+    private static AnimationDebugUI _animationDebugUI;
+#endif
 
     private bool _ammoDetailsShown;
     private bool _toReload;
@@ -18,10 +21,6 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     private float _currentSpeed = 1f;
     private float _targetSpeed = 1f;
     private SpeedState _animSpeedState = SpeedState.Normal;
-
-#if DEBUG
-    private static AnimationDebugUI _animationDebugUI;
-#endif
 
     public new void Start(EUtilityType utilityType)
     {
@@ -92,11 +91,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         }
 
         // Smoothing
-        _currentSpeed = Mathf.MoveTowards(
-            _currentSpeed,
-            _targetSpeed,
-            ConfigUtil.SlowSmoothing.Value * deltaTime
-        );
+        _currentSpeed = Mathf.MoveTowards(_currentSpeed, _targetSpeed, ConfigUtil.SlowSmoothing.Value * deltaTime);
         FirearmsAnimator_0.SetAnimationSpeed(_currentSpeed); // Set every frame okay?
     }
 
@@ -118,20 +113,15 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         var normalizedTime = currentStateInfo.normalizedTime;
 
         return IsInCheckAnimation(currentStateInfo)
-               && normalizedTime > ConfigUtil.ReloadWindowStart.Value
-               && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
+            && normalizedTime > ConfigUtil.ReloadWindowStart.Value
+            && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
     }
 
     /// <summary>
     /// Based on GClass2037.ReloadMag
     /// TODO: Does not get called in UIFixes reload in place
     /// </summary>
-    public override void ReloadMag(
-        MagazineItemClass magazine,
-        ItemAddress itemAddress,
-        Callback finishCallback,
-        Callback startCallback
-    )
+    public override void ReloadMag(MagazineItemClass magazine, ItemAddress itemAddress, Callback finishCallback, Callback startCallback)
     {
         LoggerUtil.Debug("MagCheckReloadOperation::ReloadMag");
         FirearmsAnimator_0.SetAnimationSpeed(1f);
@@ -146,9 +136,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         );
         if (reloadResult.Failed)
         {
-            LoggerUtil.Error(
-                $"MagCheckReloadOperation::ReloadMag Failed to run ReloadMag. Error: {reloadResult.Error}"
-            );
+            LoggerUtil.Error($"MagCheckReloadOperation::ReloadMag Failed to run ReloadMag. Error: {reloadResult.Error}");
             finishCallback?.Invoke(reloadResult);
             return;
         }
@@ -168,9 +156,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         else
         {
             var typeFullName = FirearmsAnimator_0.Animator.GetType().FullName;
-            LoggerUtil.Warning(
-                $"MagCheckReloadOperation::ReloadMag Cannot transition directly into a reload. {typeFullName}"
-            );
+            LoggerUtil.Warning($"MagCheckReloadOperation::ReloadMag Cannot transition directly into a reload. {typeFullName}");
         }
 
         if (Player_0.FirstPersonPointOfView)
@@ -179,9 +165,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         }
 
         State = EOperationState.Finished;
-        FirearmController_0
-            .InitiateOperation<FirearmController.GClass2016>()
-            .Start(reloadResult.Value, finishCallback);
+        FirearmController_0.InitiateOperation<FirearmController.GClass2016>().Start(reloadResult.Value, finishCallback);
         startCallback?.Succeed();
     }
 
@@ -212,7 +196,10 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         base.OnIdleStartEvent();
     }
 
-    public void SetToReload() => _toReload = true;
+    public void SetToReload()
+    {
+        _toReload = true;
+    }
 
     /// <summary>
     /// AnimatorStateInfoWrapper.IsName(string name)
@@ -220,14 +207,14 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     private static bool IsInCheckAnimation(AnimatorStateInfoWrapper stateInfo)
     {
         return _checkAnimationHash == stateInfo.fullPathHash
-               || _checkAnimationHash == stateInfo.shortNameHash
-               || _checkAnimationHash == stateInfo.nameHash;
+            || _checkAnimationHash == stateInfo.shortNameHash
+            || _checkAnimationHash == stateInfo.nameHash;
     }
 
     private enum SpeedState
     {
         Normal,
         Slowed,
-        Restored
+        Restored,
     }
 }

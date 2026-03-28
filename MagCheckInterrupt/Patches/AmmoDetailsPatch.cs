@@ -53,13 +53,7 @@ public class AmmoDetailsPatch : ModulePatch
         ammoCountPanel.Hide();
     }
 
-    private readonly struct AmmoDetails(
-        int ammoCount,
-        int maxAmmoCount,
-        int mastering,
-        string details,
-        bool foldingMechanimWeapon
-    )
+    private readonly struct AmmoDetails(int ammoCount, int maxAmmoCount, int mastering, string details, bool foldingMechanimWeapon)
     {
         public readonly int AmmoCount = ammoCount;
         public readonly int MaxAmmoCount = maxAmmoCount;

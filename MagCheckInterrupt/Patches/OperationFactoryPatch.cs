@@ -11,8 +11,7 @@ public class OperationFactoryPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(Player.FirearmController)
-            .GetMethod(nameof(Player.FirearmController.GetOperationFactoryDelegates));
+        return typeof(Player.FirearmController).GetMethod(nameof(Player.FirearmController.GetOperationFactoryDelegates));
     }
 
     [PatchPostfix]

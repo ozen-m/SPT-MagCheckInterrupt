@@ -1,19 +1,17 @@
 ﻿using System.Text;
-using EFT;
 using UnityEngine;
+using static EFT.Player;
 
 namespace MagCheckInterrupt.Components;
 
 public class AnimationDebugUI : MonoBehaviour
 {
+    private readonly StringBuilder _debugText = new();
     private bool _init;
-    private string _debugString = string.Empty;
     private FirearmsAnimator _playerAnimator;
-    private Player.AbstractHandsController _firearmController;
+    private AbstractHandsController _firearmController;
 
-    private readonly StringBuilder _sb = new();
-
-    public static AnimationDebugUI Create(GameObject target, FirearmsAnimator animator, Player.AbstractHandsController firearmController)
+    public static AnimationDebugUI Create(GameObject target, FirearmsAnimator animator, AbstractHandsController firearmController)
     {
         var debugGui = target.GetOrAddComponent<AnimationDebugUI>();
         debugGui._playerAnimator = animator;
@@ -24,7 +22,7 @@ public class AnimationDebugUI : MonoBehaviour
         return debugGui;
     }
 
-    public void SetAnimatorAndController(FirearmsAnimator animator, Player.AbstractHandsController firearmController)
+    public void SetAnimatorAndController(FirearmsAnimator animator, AbstractHandsController firearmController)
     {
         _playerAnimator = animator;
         _firearmController = firearmController;
@@ -34,17 +32,16 @@ public class AnimationDebugUI : MonoBehaviour
     {
         if (!_init) return;
 
-        GetAnimatorDebug(_playerAnimator, _firearmController, _sb);
-        _debugString = _sb.ToString();
+        GetAnimatorDebug(_playerAnimator, _firearmController, _debugText);
     }
 
     public void OnGUI()
     {
-        GUI.Box(new Rect(10, 50, 800, 1080), string.Empty);
-        GUI.Label(new Rect(15, 55, 790, 1070), _debugString);
+        GUI.Box(new Rect(10, 50, 800, 1300), string.Empty);
+        GUI.Label(new Rect(15, 55, 790, 1290), _debugText.ToString());
     }
 
-    private static void GetAnimatorDebug(FirearmsAnimator firearmsAnimator, Player.AbstractHandsController firearmController, StringBuilder sb)
+    private static void GetAnimatorDebug(FirearmsAnimator firearmsAnimator, AbstractHandsController firearmController, StringBuilder sb)
     {
         sb.Clear();
         GClass1492.smethod_3(sb, firearmController);

@@ -15,22 +15,18 @@ public class RunUtilityOpPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(GClass2037)
-            .GetMethod(nameof(GClass2037.RunUtilityOperation));
+        return typeof(GClass2037).GetMethod(nameof(GClass2037.RunUtilityOperation));
     }
 
     [PatchPrefix]
-    public static bool Prefix(
-        GClass2037 __instance,
-        GClass2038.EUtilityType utilityType
-    )
+    public static bool Prefix(GClass2037 __instance, GClass2038.EUtilityType utilityType)
     {
         if (utilityType is not GClass2038.EUtilityType.CheckMagazine)
         {
             return true;
         }
 
-        if (!__instance.Player_0.FirstPersonPointOfView)
+        if (__instance.Player_0.IsAI)
         {
             return true;
         }
@@ -38,7 +34,11 @@ public class RunUtilityOpPatch : ModulePatch
         if (!WeaponUsesExternalMag(__instance.Weapon_0))
         {
             // Show ammo details since we skip it through `AmmoDetailsPatch`
-            AmmoDetailsPatch.ShowLastAmmoDetail();
+            if (__instance.Player_0.FirstPersonPointOfView)
+            {
+                AmmoDetailsPatch.ShowLastAmmoDetail();
+            }
+
             return true;
         }
 
@@ -51,7 +51,7 @@ public class RunUtilityOpPatch : ModulePatch
     private static bool WeaponUsesExternalMag(Weapon weapon)
     {
         return weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazine
-               || weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport
-               || (weapon.ReloadMode == Weapon.EReloadMode.InternalMagazine && weapon.GetCurrentMagazine() == null);
+            || weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport
+            || (weapon.ReloadMode == Weapon.EReloadMode.InternalMagazine && weapon.GetCurrentMagazine() == null);
     }
 }

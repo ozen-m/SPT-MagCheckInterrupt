@@ -1,10 +1,12 @@
 ﻿using System.Reflection;
+using MagCheckInterrupt.Utils;
 using SPT.Reflection.Patching;
 
 namespace MagCheckInterrupt.Patches;
 
 /// <summary>
 /// This patch skips the reload animation.
+/// TODO: Check for conflicts?
 /// </summary>
 public class ReloadAnimationPatch : ModulePatch
 {
@@ -20,6 +22,7 @@ public class ReloadAnimationPatch : ModulePatch
     {
         if (!_shouldSkipReloadAnimation) return true;
 
+        LoggerUtil.Debug("ReloadAnimationPatch::Prefix Skipped reload animation");
         _shouldSkipReloadAnimation = false;
         return false;
     }

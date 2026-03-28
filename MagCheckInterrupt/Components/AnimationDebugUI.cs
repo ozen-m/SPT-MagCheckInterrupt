@@ -6,12 +6,10 @@ namespace MagCheckInterrupt.Components;
 
 public class AnimationDebugUI : MonoBehaviour
 {
+    private readonly StringBuilder _debugText = new();
     private bool _init;
-    private string _debugString = string.Empty;
     private FirearmsAnimator _playerAnimator;
     private Player.AbstractHandsController _firearmController;
-
-    private readonly StringBuilder _sb = new();
 
     public static AnimationDebugUI Create(GameObject target, FirearmsAnimator animator, Player.AbstractHandsController firearmController)
     {
@@ -34,14 +32,13 @@ public class AnimationDebugUI : MonoBehaviour
     {
         if (!_init) return;
 
-        GetAnimatorDebug(_playerAnimator, _firearmController, _sb);
-        _debugString = _sb.ToString();
+        GetAnimatorDebug(_playerAnimator, _firearmController, _debugText);
     }
 
     public void OnGUI()
     {
-        GUI.Box(new Rect(10, 50, 800, 1080), string.Empty);
-        GUI.Label(new Rect(15, 55, 790, 1070), _debugString);
+        GUI.Box(new Rect(10, 50, 800, 1300), string.Empty);
+        GUI.Label(new Rect(15, 55, 790, 1290), _debugText.ToString());
     }
 
     private static void GetAnimatorDebug(FirearmsAnimator firearmsAnimator, Player.AbstractHandsController firearmController, StringBuilder sb)

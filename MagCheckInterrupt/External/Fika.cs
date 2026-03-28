@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
@@ -13,12 +12,13 @@ using Fika.Core.Networking.LiteNetLib;
 using MagCheckInterrupt.Components;
 using MagCheckInterrupt.Net;
 using MagCheckInterrupt.Utils;
-using SPT.Reflection.Patching;
 
 namespace MagCheckInterrupt.External;
 
 public static class Fika
 {
+    public static bool IsPresent { get; private set; }
+
     /// <summary>
     /// For the host, the host's config settings.<br/>
     /// For the client, the client's original config settings
@@ -31,6 +31,8 @@ public static class Fika
     {
         LoggerUtil.Info("Initializing Fika compatibility");
 
+        IsPresent = true;
+
         // Thanks Tyfon for lending me this config sync code!
 
         // Calling new Action() myself is required.
@@ -40,8 +42,20 @@ public static class Fika
         FikaEventDispatcher.SubscribeEvent(new Action<PeerConnectedEvent>(OnPeerConnected));
         FikaEventDispatcher.SubscribeEvent(new Action<FikaRaidStartedEvent>(OnRaidStarted));
         FikaEventDispatcher.SubscribeEvent(new Action<FikaGameEndedEvent>(OnGameEnded));
+    }
 
-        new ReloadMagPatch().Enable();
+    /// <summary>
+    /// Fika runs FastForward before calling ReloadMag,
+    /// so we need to send a packet to set ReloadCalled() to other clients.
+    /// </summary>
+    /// <seealso cref="MagCheckReloadOperation.FastForward"/>
+    public static void SendReloadCalledPacket()
+    {
+        var networkManager = Singleton<IFikaNetworkManager>.Instance;
+        var packet = new ReloadCalledPacket(networkManager.NetId);
+        Singleton<IFikaNetworkManager>.Instance.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
+
+        LoggerUtil.Debug("Fika::SendReloadCalledPacket Sent packet");
     }
 
     #region HANDLERS
@@ -61,7 +75,7 @@ public static class Fika
                 break;
         }
 
-        eventArgs.Manager.RegisterPacket(new Action<ToReloadPacket>(OnReceiveToReloadPacket));
+        eventArgs.Manager.RegisterPacket(new Action<ReloadCalledPacket>(OnReceiveReloadCalledPacket));
     }
 
     private static void OnPeerConnected(PeerConnectedEvent eventArgs)
@@ -90,14 +104,18 @@ public static class Fika
         _configReceivedFromHost = ConfigUtil.SetConfigValues(packet.Config);
     }
 
-    private static void OnReceiveToReloadPacket(ToReloadPacket packet)
+    private static void OnReceiveReloadCalledPacket(ReloadCalledPacket packet)
     {
+        LoggerUtil.Debug("Fika::OnReceiveReloadCalledPacket Received ReloadCalledPacket");
+
         if (!CoopHandler.TryGetCoopHandler(out var coopHandler)) return;
         if (!coopHandler.Players.TryGetValue(packet.NetId, out var player)) return;
         if (player.HandsController is not Player.FirearmController firearmController) return;
         if (firearmController.CurrentOperation is not MagCheckReloadOperation operation) return;
 
-        operation.SetToReload();
+        operation.SetReloadCalled();
+
+        LoggerUtil.Debug("Fika::OnReceiveReloadCalledPacket SetReloadCalled");
     }
 
     private static void OnHostSettingsChanged(object sender, SettingChangedEventArgs eventArgs)
@@ -117,37 +135,3 @@ public static class Fika
     }
     #endregion
 }
-
-#region PATCHES
-/// <summary>
-/// Fika runs FastForward before calling ReloadMag,
-/// so we need to send a packet to set ToReload() on other clients.
-/// </summary>
-/// <seealso cref="MagCheckReloadOperation.FastForward"/>
-[IgnoreAutoPatch]
-public class ReloadMagPatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        return typeof(MagCheckReloadOperation).GetMethod(nameof(MagCheckReloadOperation.ReloadMag));
-    }
-
-    [PatchPrefix]
-    protected static void Prefix(MagCheckReloadOperation __instance, ref Callback startCallback)
-    {
-        if (!__instance.Player_0.IsYourPlayer) return;
-
-        // We need our packet sent first before Fika's reload packet
-        startCallback = (Callback)Delegate.Combine((Callback)SendMagInterruptPacket, startCallback);
-    }
-
-    private static void SendMagInterruptPacket(IResult result)
-    {
-        if (result.Failed) return;
-
-        var networkManager = Singleton<IFikaNetworkManager>.Instance;
-        var packet = new ToReloadPacket(networkManager.NetId);
-        Singleton<IFikaNetworkManager>.Instance.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
-    }
-}
-#endregion

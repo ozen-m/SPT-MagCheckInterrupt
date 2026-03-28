@@ -15,7 +15,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 #endif
 
     private bool _ammoDetailsShown;
-    private bool _toReload;
+    private bool _reloadCalled;
 
     // Slow down animation fields
     private float _currentSpeed = 1f;
@@ -98,7 +98,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     public override void Reset()
     {
         _ammoDetailsShown = false;
-        _toReload = false;
+        _reloadCalled = false;
         _animSpeedState = SpeedState.Normal;
         _currentSpeed = 1f;
         _targetSpeed = 1f;
@@ -162,6 +162,13 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         if (Player_0.FirstPersonPointOfView)
         {
             AmmoDetailsPatch.HideAmmoCount();
+
+            // We don't want observed players re-sending packets and
+            // our packet needs to be sent first before Fika's reload packet (startCallback)
+            if (External.Fika.IsPresent)
+            {
+                External.Fika.SendReloadCalledPacket();
+            }
         }
 
         State = EOperationState.Finished;
@@ -178,9 +185,9 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     public override void FastForward()
     {
         // Fika runs FastForward before calling ReloadMag,
-        // so we need a packet to set _toReload or else it finishes this operation and ReloadMag won't be called.
+        // so we need a packet to set _reloadCalled or else it finishes this operation and ReloadMag won't be called.
         LoggerUtil.Debug("MagCheckReloadOperation::FastForward");
-        if (_toReload)
+        if (_reloadCalled)
         {
             LoggerUtil.Debug("MagCheckReloadOperation::FastForward Skipped FastForward");
             return;
@@ -196,9 +203,9 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         base.OnIdleStartEvent();
     }
 
-    public void SetToReload()
+    public void SetReloadCalled()
     {
-        _toReload = true;
+        _reloadCalled = true;
     }
 
     /// <summary>

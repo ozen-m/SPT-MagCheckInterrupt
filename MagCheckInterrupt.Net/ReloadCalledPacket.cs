@@ -2,7 +2,7 @@
 
 namespace MagCheckInterrupt.Net;
 
-public struct ToReloadPacket(int netId) : INetSerializable
+public struct ReloadCalledPacket(int netId) : INetSerializable
 {
     public int NetId = netId;
 

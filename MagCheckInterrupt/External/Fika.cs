@@ -52,8 +52,10 @@ public static class Fika
     public static void SendReloadCalledPacket()
     {
         var networkManager = Singleton<IFikaNetworkManager>.Instance;
+        if (networkManager is null) return;
+
         var packet = new ReloadCalledPacket(networkManager.NetId);
-        Singleton<IFikaNetworkManager>.Instance.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
+        networkManager.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
 
         LoggerUtil.Debug("Fika::SendReloadCalledPacket Sent packet");
     }

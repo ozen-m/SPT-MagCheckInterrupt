@@ -25,5 +25,9 @@ public class MagCheckInterrupt : BaseUnityPlugin
         {
             External.Fika.Init();
         }
+        if (Chainloader.PluginInfos.ContainsKey("Tyfon.UIFixes")) // TODO: Update GUID in 4.1.x
+        {
+            External.UIFixes.Init();
+        }
     }
 }

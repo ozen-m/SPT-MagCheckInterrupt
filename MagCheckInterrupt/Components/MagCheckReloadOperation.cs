@@ -178,6 +178,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             return;
         }
 
+        FirearmsAnimator_0.SetAnimationSpeed(1f);
         State = EOperationState.Ready;
         OnIdleStartEvent();
     }

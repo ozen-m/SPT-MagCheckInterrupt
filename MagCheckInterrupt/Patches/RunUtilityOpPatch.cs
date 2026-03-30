@@ -43,6 +43,7 @@ public class RunUtilityOpPatch : ModulePatch
         }
 
         LoggerUtil.Debug("RunUtilityOpPatch::Prefix Initiate MagCheckReloadOperation");
+        __instance.Player_0.BodyAnimatorCommon.SetFloat(PlayerAnimator.RELOAD_FLOAT_PARAM_HASH, 1f);
         __instance.State = Player.EOperationState.Finished;
         __instance.FirearmController_0.InitiateOperation<MagCheckReloadOperation>().Start(utilityType);
         return false;

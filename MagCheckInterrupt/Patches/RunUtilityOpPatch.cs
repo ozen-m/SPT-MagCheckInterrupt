@@ -21,7 +21,7 @@ public class RunUtilityOpPatch : ModulePatch
     [PatchPrefix]
     public static bool Prefix(GClass2037 __instance, GClass2038.EUtilityType utilityType)
     {
-        if (utilityType is not GClass2038.EUtilityType.CheckMagazine)
+        if (utilityType != GClass2038.EUtilityType.CheckMagazine)
         {
             return true;
         }
@@ -51,7 +51,6 @@ public class RunUtilityOpPatch : ModulePatch
     private static bool WeaponUsesExternalMag(Weapon weapon)
     {
         return weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazine
-            || weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport
-            || (weapon.ReloadMode == Weapon.EReloadMode.InternalMagazine && weapon.GetCurrentMagazine() == null);
+            || weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport;
     }
 }

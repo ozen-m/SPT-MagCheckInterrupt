@@ -161,7 +161,7 @@ public static class ConfigUtil
             if (tag is not ConfigurationManagerAttributes attr) continue;
 
             attr.Browsable = usingFikaHost;
-            break;
+            return;
         }
     }
 

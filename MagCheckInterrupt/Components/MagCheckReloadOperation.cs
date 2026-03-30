@@ -1,4 +1,5 @@
-﻿using Comfort.Common;
+﻿using System;
+using Comfort.Common;
 using EFT.InventoryLogic;
 using MagCheckInterrupt.Patches;
 using MagCheckInterrupt.Utils;
@@ -9,7 +10,6 @@ namespace MagCheckInterrupt.Components;
 
 public class MagCheckReloadOperation(FirearmController controller) : FirearmController.GClass2038(controller)
 {
-    private static readonly int _checkAnimationHash = Animator.StringToHash("CHECK");
 #if DEBUG
     private static AnimationDebugUI _animationDebugUI;
 #endif
@@ -41,16 +41,9 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
     public override void Update(float deltaTime)
     {
-        if (State is EOperationState.Finished or not EOperationState.Ready)
-        {
-            return;
-        }
+        if (State != EOperationState.Ready) return;
 
         var currentStateInfo = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX);
-        if (!IsInCheckAnimation(currentStateInfo))
-        {
-            return;
-        }
         var normalizedTime = currentStateInfo.normalizedTime;
 
         // Show ammo details at the start of the reload window
@@ -64,10 +57,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             _ammoDetailsShown = true;
         }
 
-        if (!ConfigUtil.SlowAnimation.Value)
-        {
-            return;
-        }
+        if (!ConfigUtil.SlowAnimation.Value) return;
 
         switch (_animSpeedState)
         {
@@ -109,12 +99,11 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
     public override bool CanStartReload()
     {
+        if (State != EOperationState.Ready) return false;
+
         var currentStateInfo = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX);
         var normalizedTime = currentStateInfo.normalizedTime;
-
-        return IsInCheckAnimation(currentStateInfo)
-            && normalizedTime > ConfigUtil.ReloadWindowStart.Value
-            && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
+        return normalizedTime > ConfigUtil.ReloadWindowStart.Value && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
     }
 
     /// <summary>
@@ -147,7 +136,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             // so we need to skip the reload animation and do our own crossfade
             ReloadAnimationPatch.SkipReloadAnimation();
             animatorWrapper.Animator_0.CrossFade(
-                525784070, // Hash for `RELOAD OUT`
+                ReloadOutHash,
                 0.10f, // Note: Anything more than 0.10f looks like a magazine swap
                 FirearmsAnimator.HANDS_LAYER_INDEX,
                 0.50f // Skip mag out from weapon animation
@@ -208,17 +197,20 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         _reloadCalled = true;
     }
 
-    /// <summary>
-    /// AnimatorStateInfoWrapper.IsName(string name)
-    /// </summary>
-    private static bool IsInCheckAnimation(AnimatorStateInfoWrapper stateInfo)
-    {
-        return _checkAnimationHash == stateInfo.fullPathHash
-            || _checkAnimationHash == stateInfo.shortNameHash
-            || _checkAnimationHash == stateInfo.nameHash;
-    }
+    private static readonly int _externalMagReloadOutHash = Animator.StringToHash("RELOAD OUT");
+    private static readonly int _internalMagWithInternalSupportReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
 
-    private enum SpeedState
+    private int ReloadOutHash =>
+        Weapon_0.ReloadMode switch
+        {
+            Weapon.EReloadMode.ExternalMagazine => _externalMagReloadOutHash,
+            Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport => _internalMagWithInternalSupportReloadOutHash,
+            _ => throw new InvalidOperationException(
+                $"Unsupported reload mode: {Weapon_0.ReloadMode}, with weapon: {Weapon_0.ToFullString()}"
+            ),
+        };
+
+    private enum SpeedState : byte
     {
         Normal,
         Slowed,

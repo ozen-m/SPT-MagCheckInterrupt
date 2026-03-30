@@ -11,7 +11,7 @@ namespace MagCheckInterrupt.Components;
 public class MagCheckReloadOperation(FirearmController controller) : FirearmController.GClass2038(controller)
 {
 #if DEBUG
-    private static AnimationDebugUI _animationDebugUI;
+    private static PlayerStateDebug _playerStateDebug;
 #endif
 
     private bool _ammoDetailsShown;
@@ -28,13 +28,9 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
 #if DEBUG
         LoggerUtil.Debug("MagCheckReloadOperation::Start");
-        if (_animationDebugUI == null)
+        if (_playerStateDebug == null)
         {
-            _animationDebugUI = AnimationDebugUI.Create(Player_0.gameObject, FirearmsAnimator_0, FirearmController_0);
-        }
-        else
-        {
-            _animationDebugUI.SetAnimatorAndController(FirearmsAnimator_0, FirearmController_0);
+            _playerStateDebug = PlayerStateDebug.Create(Player_0);
         }
 #endif
     }

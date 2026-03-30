@@ -1,5 +1,4 @@
-﻿using System;
-using Comfort.Common;
+﻿using Comfort.Common;
 using EFT.InventoryLogic;
 using MagCheckInterrupt.Patches;
 using MagCheckInterrupt.Utils;
@@ -193,18 +192,30 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         _reloadCalled = true;
     }
 
+    private static readonly int _externalMagCheckHash = Animator.StringToHash("CHECK");
+    private static readonly int _externalMagWithInternalSupportCheckHash = Animator.StringToHash("CHECK MAG");
     private static readonly int _externalMagReloadOutHash = Animator.StringToHash("RELOAD OUT");
-    private static readonly int _internalMagWithInternalSupportReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
+    private static readonly int _externalMagWithInternalSupportReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
 
-    private int ReloadOutHash =>
-        Weapon_0.ReloadMode switch
+    private int ReloadOutHash
+    {
+        get
         {
-            Weapon.EReloadMode.ExternalMagazine => _externalMagReloadOutHash,
-            Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport => _internalMagWithInternalSupportReloadOutHash,
-            _ => throw new InvalidOperationException(
-                $"Unsupported reload mode: {Weapon_0.ReloadMode}, with weapon: {Weapon_0.ToFullString()}"
-            ),
-        };
+            var magCheckHash = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
+            if (magCheckHash == _externalMagCheckHash)
+            {
+                return _externalMagReloadOutHash;
+            }
+            if (magCheckHash == _externalMagWithInternalSupportCheckHash)
+            {
+                return _externalMagWithInternalSupportReloadOutHash;
+            }
+
+            LoggerUtil.Error($"Unsupported mag check hash: {magCheckHash} for weapon: {Weapon_0.ToFullString()}");
+            OnIdleStartEvent();
+            return _externalMagReloadOutHash;
+        }
+    }
 
     private enum SpeedState : byte
     {

@@ -104,7 +104,6 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
     /// <summary>
     /// Based on GClass2037.ReloadMag
-    /// TODO: Does not get called in UIFixes reload in place
     /// </summary>
     public override void ReloadMag(MagazineItemClass magazine, ItemAddress itemAddress, Callback finishCallback, Callback startCallback)
     {

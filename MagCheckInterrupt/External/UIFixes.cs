@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
@@ -16,7 +15,10 @@ public class UIFixes
     {
         LoggerUtil.Info("Initializing UI Fixes compatibility");
 
-        new SwapReloadPatch().Enable();
+        if (!Fika.IsPresent)
+        {
+            new SwapReloadPatch().Enable();
+        }
     }
 }
 
@@ -28,11 +30,12 @@ public class SwapReloadPatch : ModulePatch
 
     protected override MethodBase GetTargetMethod()
     {
-        if (Fika.IsPresent)
-        {
-            var type = Type.GetType("Fika.Core.Main.ClientClasses.HandsControllers.FikaClientFirearmController, Fika.Core");
-            return AccessTools.Method(type, "ReloadMag");
-        }
+        // Disabled, succeeds on the client but fails on the server
+        // if (Fika.IsPresent)
+        // {
+        //     var type = Type.GetType("Fika.Core.Main.ClientClasses.HandsControllers.FikaClientFirearmController, Fika.Core");
+        //     return AccessTools.Method(type, "ReloadMag");
+        // }
 
         return AccessTools.Method(typeof(Player.FirearmController), nameof(Player.FirearmController.ReloadMag));
     }

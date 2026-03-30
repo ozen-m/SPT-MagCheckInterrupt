@@ -59,7 +59,7 @@ public static class ConfigUtil
             "Reload Window Start",
             0.1f,
             new ConfigDescription(
-                "How early you can reload during the check magazine animation, in normalized time",
+                "How early you can reload during the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
                 new ConfigurationManagerAttributes { Order = 32, ShowRangeAsPercent = true, IsAdvanced = true }
             )
@@ -69,7 +69,7 @@ public static class ConfigUtil
             "Reload Window End",
             0.6f,
             new ConfigDescription(
-                "How late you can reload during the check magazine animation, in normalized time",
+                "How late you can reload during the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
                 new ConfigurationManagerAttributes { Order = 31, ShowRangeAsPercent = true, IsAdvanced = true }
             )
@@ -80,7 +80,7 @@ public static class ConfigUtil
             "Enable",
             true,
             new ConfigDescription(
-                "Slow down the check magazine animation for a certain time",
+                "Slow down the magazine check animation for a certain time",
                 null,
                 new ConfigurationManagerAttributes { Order = 15 }
             )
@@ -90,7 +90,7 @@ public static class ConfigUtil
             "Slow Percentage",
             0.25f,
             new ConfigDescription(
-                "Multiplier for the check magazine animation speed when Slow Animation is enabled",
+                "Multiplier for the magazine check animation speed when Slow Animation is enabled",
                 new AcceptableValueRange<float>(0.01f, 1f),
                 new ConfigurationManagerAttributes { Order = 14, ShowRangeAsPercent = true, IsAdvanced = true }
             )
@@ -100,7 +100,7 @@ public static class ConfigUtil
             "Start",
             0.3f,
             new ConfigDescription(
-                "When to start slowing down the check magazine animation, in normalized time",
+                "When to start slowing down the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
                 new ConfigurationManagerAttributes { Order = 13, ShowRangeAsPercent = true, IsAdvanced = true }
             )
@@ -110,7 +110,7 @@ public static class ConfigUtil
             "End",
             0.4f,
             new ConfigDescription(
-                "When to restore speed of the check magazine animation, in normalized time",
+                "When to restore speed of the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
                 new ConfigurationManagerAttributes { Order = 12, ShowRangeAsPercent = true, IsAdvanced = true }
             )

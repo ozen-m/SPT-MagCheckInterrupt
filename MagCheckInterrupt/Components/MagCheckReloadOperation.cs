@@ -124,41 +124,12 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         );
         if (reloadResult.Failed)
         {
-            LoggerUtil.Error($"MagCheckReloadOperation::ReloadMag Failed to run ReloadMag. Error: {reloadResult.Error}");
+            LoggerUtil.Error($"MagCheckReloadOperation::ReloadMag Failed to reload. Error: {reloadResult.Error}");
             finishCallback?.Invoke(reloadResult);
             return;
         }
 
-        if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper && GetReloadOutHash(out var reloadOutHash))
-        {
-            // GClass2016.Start calls FirearmsAnimator.Reload(bool b)
-            // so we need to skip the reload animation and do our own crossfade
-            ReloadAnimationPatch.SkipReloadAnimation();
-            animatorWrapper.Animator_0.CrossFade(
-                reloadOutHash,
-                0.10f, // Note: Anything more than 0.10f looks like a magazine swap
-                FirearmsAnimator.HANDS_LAYER_INDEX,
-                0.50f // Skip mag out from weapon animation
-            );
-        }
-        else
-        {
-            var typeFullName = FirearmsAnimator_0.Animator.GetType().FullName;
-            LoggerUtil.Warning($"MagCheckReloadOperation::ReloadMag Cannot transition directly into a reload. {typeFullName}");
-        }
-
-        if (Player_0.FirstPersonPointOfView)
-        {
-            AmmoDetailsPatch.HideAmmoCount();
-
-            // We don't want observed players re-sending packets and
-            // our packet needs to be sent first before Fika's reload packet (startCallback)
-            if (External.Fika.IsPresent)
-            {
-                External.Fika.SendReloadCalledPacket();
-            }
-        }
-
+        TransitionToReload(false);
         State = EOperationState.Finished;
         FirearmController_0.InitiateOperation<FirearmController.GClass2016>().Start(reloadResult.Value, finishCallback);
         startCallback?.Succeed();
@@ -200,29 +171,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
                 return;
             }
 
-            if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper && GetReloadOutHash(out var reloadOutHash))
-            {
-                // No need to skip the reload animation, it isn't called by the insert mag operation,
-                // just do our own crossfade.
-                animatorWrapper.Animator_0.CrossFade(
-                    reloadOutHash,
-                    0.15f, // Note: Anything more than 0.10f looks like a magazine swap
-                    FirearmsAnimator.HANDS_LAYER_INDEX,
-                    0.50f // Skip mag out from weapon animation
-                );
-            }
-            else
-            {
-                var typeFullName = FirearmsAnimator_0.Animator.GetType().FullName;
-                LoggerUtil.Warning($"MagCheckReloadOperation::Execute Cannot transition directly into a reload. {typeFullName}");
-            }
-
-            if (Player_0.FirstPersonPointOfView)
-            {
-                AmmoDetailsPatch.HideAmmoCount();
-                // No need to send a packet here
-            }
-
+            TransitionToReload(true);
             State = EOperationState.Finished;
             FirearmController_0.InitiateOperation<FirearmController.GClass2039>().Start(insertResult.Value, callback);
             return;
@@ -270,6 +219,47 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     public void SetReloadCalled()
     {
         _reloadCalled = true;
+    }
+
+    /// <summary>
+    /// Performs the animation from a magazine check to a reload.
+    /// Also includes, hiding the ammo count and sending of Fika packet.
+    /// </summary>
+    /// <param name="isSwap">True if the reload is triggered by a swap operation, done by UI Fixes; otherwise, false (normal reload)</param>
+    private void TransitionToReload(bool isSwap)
+    {
+        if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper && GetReloadOutHash(out var reloadOutHash))
+        {
+            // GClass2016.Start calls FirearmsAnimator.Reload(bool b), so we need to skip the reload animation and do our own crossfade.
+            // But if it's a swap reload, no need to skip the reload animation, it's not called by the insert mag operation.
+            if (!isSwap)
+            {
+                ReloadAnimationPatch.SkipReloadAnimation();
+            }
+            animatorWrapper.Animator_0.CrossFade(
+                reloadOutHash,
+                isSwap ? 0.15f : 0.10f, // Note: Anything more than 0.10f looks like a magazine swap
+                FirearmsAnimator.HANDS_LAYER_INDEX,
+                0.50f // Skip mag out from weapon animation
+            );
+        }
+        else
+        {
+            var typeFullName = FirearmsAnimator_0.Animator.GetType().FullName;
+            LoggerUtil.Warning($"MagCheckReloadOperation::TransitionToReload Cannot transition directly into a reload. {typeFullName}");
+        }
+
+        if (!Player_0.FirstPersonPointOfView) return;
+
+        // We don't want observed players re-sending packets and
+        // our packet needs to be sent first before Fika's reload packet (ReloadMag.startCallback).
+        // But if it's a swap reload, no need to send a packet.
+        if (!isSwap && External.Fika.IsPresent)
+        {
+            External.Fika.SendReloadCalledPacket();
+        }
+
+        AmmoDetailsPatch.HideAmmoCount();
     }
 
     private bool GetReloadOutHash(out int reloadOutHash)

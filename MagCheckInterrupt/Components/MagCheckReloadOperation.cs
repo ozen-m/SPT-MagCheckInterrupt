@@ -164,6 +164,81 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         startCallback?.Succeed();
     }
 
+    /// <summary>
+    /// UI Fixes' reload in place feature uses a SwapOperation.
+    /// This override handles that swap.
+    /// </summary>
+    public override void Execute(GInterface438 operation, Callback callback)
+    {
+        if (operation is not GInterface443 { Item1: MagazineItemClass } oneItemOperation)
+        {
+            base.Execute(operation, callback);
+            return;
+        }
+
+#if DEBUG
+        // This operation only runs for weapons with ReloadMode.ExternalMagazine/ExternalMagazineWithInternalReloadSupport,
+        // see Patches.RunUtilityOpPatch
+        var reloadMode = Weapon_0.ReloadMode;
+        if (reloadMode == Weapon.EReloadMode.InternalMagazine || reloadMode == Weapon.EReloadMode.OnlyBarrel)
+        {
+            callback.Succeed();
+            return;
+        }
+#endif
+
+        // Insert magazine operation
+        if (oneItemOperation.To1 is not null && oneItemOperation.To1.IsChildOf(Weapon_0))
+        {
+            LoggerUtil.Debug("MagCheckReloadOperation::Execute Insert mag operation");
+            FirearmsAnimator_0.SetAnimationSpeed(1f);
+
+            var insertResult = FirearmController.GClass2005.Run(Player_0.InventoryController, Weapon_0, Player_0.ProfileId);
+            if (insertResult.Failed)
+            {
+                callback.Invoke(insertResult);
+                return;
+            }
+
+            if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper && GetReloadOutHash(out var reloadOutHash))
+            {
+                // No need to skip the reload animation, it isn't called by the insert mag operation,
+                // just do our own crossfade.
+                animatorWrapper.Animator_0.CrossFade(
+                    reloadOutHash,
+                    0.15f, // Note: Anything more than 0.10f looks like a magazine swap
+                    FirearmsAnimator.HANDS_LAYER_INDEX,
+                    0.50f // Skip mag out from weapon animation
+                );
+            }
+            else
+            {
+                var typeFullName = FirearmsAnimator_0.Animator.GetType().FullName;
+                LoggerUtil.Warning($"MagCheckReloadOperation::Execute Cannot transition directly into a reload. {typeFullName}");
+            }
+
+            if (Player_0.FirstPersonPointOfView)
+            {
+                AmmoDetailsPatch.HideAmmoCount();
+                // No need to send a packet here
+            }
+
+            State = EOperationState.Finished;
+            FirearmController_0.InitiateOperation<FirearmController.GClass2039>().Start(insertResult.Value, callback);
+            return;
+        }
+
+#if DEBUG
+        // Remove magazine operation
+        if (oneItemOperation.From1 is not null && oneItemOperation.From1.IsChildOf(Weapon_0))
+        {
+            LoggerUtil.Debug("MagCheckReloadOperation::Execute Remove mag operation...skipped");
+        }
+#endif
+
+        callback.Succeed();
+    }
+
     public override void SetInventoryOpened(bool opened)
     {
         FirearmController_0.InventoryOpened = opened;

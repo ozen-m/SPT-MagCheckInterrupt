@@ -9,6 +9,10 @@ namespace MagCheckInterrupt.Components;
 
 public class MagCheckReloadOperation(FirearmController controller) : FirearmController.GClass2038(controller)
 {
+    private static readonly int _magCheckHash = Animator.StringToHash("CHECK");
+    private static readonly int _magReloadOutHash = Animator.StringToHash("RELOAD OUT");
+    private static readonly int _magWithInternalCheckHash = Animator.StringToHash("CHECK MAG");
+    private static readonly int _magWithInternalReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
 #if DEBUG
     private static PlayerStateDebug _playerStateDebug;
 #endif
@@ -38,12 +42,10 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     {
         if (State != EOperationState.Ready) return;
 
-        var currentStateInfo = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX);
-        var normalizedTime = currentStateInfo.normalizedTime;
-
-        // Show ammo details at the start of the reload window
+        var normalizedTime = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).normalizedTime;
         if (!_ammoDetailsShown && normalizedTime > ConfigUtil.ReloadWindowStart.Value)
         {
+            // Show ammo details at the start of the reload window
             if (Player_0.FirstPersonPointOfView)
             {
                 AmmoDetailsPatch.ShowLastAmmoDetail();
@@ -96,8 +98,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     {
         if (State != EOperationState.Ready) return false;
 
-        var currentStateInfo = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX);
-        var normalizedTime = currentStateInfo.normalizedTime;
+        var normalizedTime = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).normalizedTime;
         return normalizedTime > ConfigUtil.ReloadWindowStart.Value && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
     }
 
@@ -124,13 +125,13 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             return;
         }
 
-        if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper)
+        if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper && GetReloadOutHash(out var reloadOutHash))
         {
             // GClass2016.Start calls FirearmsAnimator.Reload(bool b)
             // so we need to skip the reload animation and do our own crossfade
             ReloadAnimationPatch.SkipReloadAnimation();
             animatorWrapper.Animator_0.CrossFade(
-                ReloadOutHash,
+                reloadOutHash,
                 0.10f, // Note: Anything more than 0.10f looks like a magazine swap
                 FirearmsAnimator.HANDS_LAYER_INDEX,
                 0.50f // Skip mag out from weapon animation
@@ -192,29 +193,25 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         _reloadCalled = true;
     }
 
-    private static readonly int _externalMagCheckHash = Animator.StringToHash("CHECK");
-    private static readonly int _externalMagWithInternalSupportCheckHash = Animator.StringToHash("CHECK MAG");
-    private static readonly int _externalMagReloadOutHash = Animator.StringToHash("RELOAD OUT");
-    private static readonly int _externalMagWithInternalSupportReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
-
-    private int ReloadOutHash
+    private bool GetReloadOutHash(out int reloadOutHash)
     {
-        get
+        var currentStateHash = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
+        if (currentStateHash == _magCheckHash)
         {
-            var magCheckHash = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
-            if (magCheckHash == _externalMagCheckHash)
-            {
-                return _externalMagReloadOutHash;
-            }
-            if (magCheckHash == _externalMagWithInternalSupportCheckHash)
-            {
-                return _externalMagWithInternalSupportReloadOutHash;
-            }
-
-            LoggerUtil.Error($"Unsupported mag check hash: {magCheckHash} for weapon: {Weapon_0.ToFullString()}");
-            OnIdleStartEvent();
-            return _externalMagReloadOutHash;
+            reloadOutHash = _magReloadOutHash;
+            return true;
         }
+        if (currentStateHash == _magWithInternalCheckHash)
+        {
+            reloadOutHash = _magWithInternalReloadOutHash;
+            return true;
+        }
+
+        LoggerUtil.Error(
+            $"Unsupported mag check hash: {GClass758.GetAnimStateByNameHash(currentStateHash)} ({currentStateHash}) for weapon: {Weapon_0.ToFullString()}"
+        );
+        reloadOutHash = -1;
+        return false;
     }
 
     private enum SpeedState : byte

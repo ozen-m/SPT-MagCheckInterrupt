@@ -19,6 +19,11 @@ public class PlayerStateDebug : MonoBehaviour
         return debugGui;
     }
 
+    public void SetPlayer(Player player)
+    {
+        _player = player;
+    }
+
     public void Update()
     {
         if (!_init) return;

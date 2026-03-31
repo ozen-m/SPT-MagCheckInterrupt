@@ -35,6 +35,10 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         {
             _playerStateDebug = PlayerStateDebug.Create(Player_0);
         }
+        else
+        {
+            _playerStateDebug.SetPlayer(Player_0);
+        }
 #endif
     }
 

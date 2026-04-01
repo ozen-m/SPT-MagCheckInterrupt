@@ -21,5 +21,6 @@ public class OperationFactoryPatch : ModulePatch
     )
     {
         __result.TryAdd(typeof(MagCheckReloadOperation), () => new MagCheckReloadOperation(__instance));
+        __result.TryAdd(typeof(SwapReloadOperation), () => new SwapReloadOperation(__instance));
     }
 }

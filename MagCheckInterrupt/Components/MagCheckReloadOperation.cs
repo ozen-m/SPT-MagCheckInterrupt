@@ -9,16 +9,13 @@ namespace MagCheckInterrupt.Components;
 
 public class MagCheckReloadOperation(FirearmController controller) : FirearmController.GClass2038(controller)
 {
-    private static readonly int _magCheckHash = Animator.StringToHash("CHECK");
-    private static readonly int _magReloadOutHash = Animator.StringToHash("RELOAD OUT");
-    private static readonly int _magWithInternalCheckHash = Animator.StringToHash("CHECK MAG");
-    private static readonly int _magWithInternalReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
 #if DEBUG
     private static PlayerStateDebug _playerStateDebug;
 #endif
 
     private bool _ammoDetailsShown;
     private bool _reloadCalled;
+    private GClass3397 _swapRemoveOperation;
 
     // Slow down animation fields
     private float _currentSpeed = 1f;
@@ -90,6 +87,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     {
         _ammoDetailsShown = false;
         _reloadCalled = false;
+        _swapRemoveOperation = null;
         _animSpeedState = SpeedState.Normal;
         _currentSpeed = 1f;
         _targetSpeed = 1f;
@@ -107,7 +105,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     }
 
     /// <summary>
-    /// Based on GClass2037.ReloadMag
+    /// Based on <see cref="FirearmController.GClass2037.ReloadMag"/>
     /// </summary>
     public override void ReloadMag(MagazineItemClass magazine, ItemAddress itemAddress, Callback finishCallback, Callback startCallback)
     {
@@ -129,7 +127,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             return;
         }
 
-        TransitionToReload(false);
+        this.TransitionToReload(false);
         State = EOperationState.Finished;
         FirearmController_0.InitiateOperation<FirearmController.GClass2016>().Start(reloadResult.Value, finishCallback);
         startCallback?.Succeed();
@@ -164,26 +162,29 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             LoggerUtil.Debug("MagCheckReloadOperation::Execute Insert mag operation");
             FirearmsAnimator_0.SetAnimationSpeed(1f);
 
-            var insertResult = FirearmController.GClass2005.Run(Player_0.InventoryController, Weapon_0, Player_0.ProfileId);
-            if (insertResult.Failed)
+            if (_swapRemoveOperation is null)
             {
-                callback.Invoke(insertResult);
+                // Should not be null at this point, start idle operation
+                LoggerUtil.Error("MagCheckReloadOperation::Execute Something unexpected happened while swapping magazines!");
+                callback.Fail("Remove magazine from weapon operation was not executed?");
+
+                State = EOperationState.Finished;
+                FirearmController_0.InitiateOperation<FirearmController.GClass2037>().Start(null);
                 return;
             }
 
-            TransitionToReload(true);
             State = EOperationState.Finished;
-            FirearmController_0.InitiateOperation<FirearmController.GClass2039>().Start(insertResult.Value, callback);
+            FirearmController_0.InitiateOperation<SwapReloadOperation>()
+                .Start((MagazineItemClass)_swapRemoveOperation.Item_0, (Slot)_swapRemoveOperation.ItemAddress_0.Container, callback);
             return;
         }
 
-#if DEBUG
         // Remove magazine operation
-        if (oneItemOperation.From1 is not null && oneItemOperation.From1.IsChildOf(Weapon_0))
+        if (oneItemOperation.From1 is not null && oneItemOperation.From1.IsChildOf(Weapon_0) && oneItemOperation is GClass3397 removeOp)
         {
             LoggerUtil.Debug("MagCheckReloadOperation::Execute Remove mag operation...skipped");
+            _swapRemoveOperation = removeOp;
         }
-#endif
 
         callback.Succeed();
     }
@@ -219,68 +220,6 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     public void SetReloadCalled()
     {
         _reloadCalled = true;
-    }
-
-    /// <summary>
-    /// Performs the animation from a magazine check to a reload.
-    /// Also includes, hiding the ammo count and sending of Fika packet.
-    /// </summary>
-    /// <param name="isSwap">True if the reload is triggered by a swap operation, done by UI Fixes; otherwise, false (normal reload)</param>
-    private void TransitionToReload(bool isSwap)
-    {
-        if (FirearmsAnimator_0.Animator is GClass1446 animatorWrapper && GetReloadOutHash(out var reloadOutHash))
-        {
-            // GClass2016.Start calls FirearmsAnimator.Reload(bool b), so we need to skip the reload animation and do our own crossfade.
-            // But if it's a swap reload, no need to skip the reload animation, it's not called by the insert mag operation.
-            if (!isSwap)
-            {
-                ReloadAnimationPatch.SkipReloadAnimation();
-            }
-            animatorWrapper.Animator_0.CrossFade(
-                reloadOutHash,
-                isSwap ? 0.15f : 0.10f, // Note: Anything more than 0.10f looks like a magazine swap
-                FirearmsAnimator.HANDS_LAYER_INDEX,
-                0.50f // Skip mag out from weapon animation
-            );
-        }
-        else
-        {
-            var typeFullName = FirearmsAnimator_0.Animator.GetType().FullName;
-            LoggerUtil.Warning($"MagCheckReloadOperation::TransitionToReload Cannot transition directly into a reload. {typeFullName}");
-        }
-
-        if (!Player_0.FirstPersonPointOfView) return;
-
-        // We don't want observed players re-sending packets and
-        // our packet needs to be sent first before Fika's reload packet (ReloadMag.startCallback).
-        // But if it's a swap reload, no need to send a packet.
-        if (!isSwap && External.Fika.IsPresent)
-        {
-            External.Fika.SendReloadCalledPacket();
-        }
-
-        AmmoDetailsPatch.HideAmmoCount();
-    }
-
-    private bool GetReloadOutHash(out int reloadOutHash)
-    {
-        var currentStateHash = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
-        if (currentStateHash == _magCheckHash)
-        {
-            reloadOutHash = _magReloadOutHash;
-            return true;
-        }
-        if (currentStateHash == _magWithInternalCheckHash)
-        {
-            reloadOutHash = _magWithInternalReloadOutHash;
-            return true;
-        }
-
-        LoggerUtil.Error(
-            $"Unsupported mag check hash: {GClass758.GetAnimStateByNameHash(currentStateHash)} ({currentStateHash}) for weapon: {Weapon_0.ToFullString()}"
-        );
-        reloadOutHash = -1;
-        return false;
     }
 
     private enum SpeedState : byte

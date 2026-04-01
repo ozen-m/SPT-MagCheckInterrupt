@@ -25,11 +25,11 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     private float _targetSpeed = 1f;
     private SpeedState _animSpeedState = SpeedState.Normal;
 
+#if DEBUG
     public new void Start(EUtilityType utilityType)
     {
         base.Start(utilityType);
 
-#if DEBUG
         LoggerUtil.Debug("MagCheckReloadOperation::Start");
         if (_playerStateDebug == null)
         {
@@ -39,8 +39,8 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         {
             _playerStateDebug.SetPlayer(Player_0);
         }
-#endif
     }
+#endif
 
     public override void Update(float deltaTime)
     {

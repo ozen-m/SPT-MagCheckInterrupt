@@ -214,6 +214,12 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     public override void OnIdleStartEvent()
     {
         LoggerUtil.Debug("MagCheckReloadOperation::OnIdleStartEvent");
+
+        if (KeybindsUtil.AreCheckAndReloadKeysConflicting())
+        {
+            ContinuousReloadPatch.SkipReload();
+        }
+
         base.OnIdleStartEvent();
     }
 

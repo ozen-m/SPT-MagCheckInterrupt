@@ -1,0 +1,36 @@
+﻿using EFT.InputSystem;
+
+namespace MagCheckInterrupt.Utils;
+
+public static class KeybindsUtil
+{
+    private static KeyBindingClass _reloadKeybind;
+    private static KeyBindingClass _checkKeybind;
+
+    public static void UpdateKeys(InputBindingsDataClass keys)
+    {
+        foreach (var key in keys.Gclass2408_0)
+        {
+            if (key is not KeyBindingClass keybind) continue;
+
+            switch (keybind.GameKey)
+            {
+                case EGameKey.ReloadWeapon:
+                    _reloadKeybind = keybind;
+                    continue;
+                case EGameKey.CheckAmmo:
+                    _checkKeybind = keybind;
+                    continue;
+            }
+        }
+    }
+
+    public static bool AreCheckAndReloadKeysConflicting()
+    {
+        if (!_reloadKeybind.KeyCombinationState_0.GetKeysStatus(out var reloadStatus)) return false;
+        if (!_checkKeybind.KeyCombinationState_0.GetKeysStatus(out var checkStatus)) return false;
+
+        return (reloadStatus == EKeyPress.Down || reloadStatus == EKeyPress.Hold)
+            && (checkStatus == EKeyPress.Down || checkStatus == EKeyPress.Hold);
+    }
+}

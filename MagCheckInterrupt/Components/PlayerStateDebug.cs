@@ -40,15 +40,15 @@ public class PlayerStateDebug : MonoBehaviour
     private static void GetPlayerStateSnapshot(StringBuilder sb, Player player)
     {
         sb.Clear();
-        GClass1492.smethod_0(sb, player);
+        AnimationDebug.smethod_0(sb, player);
         // var firearmController = player.HandsController as FirearmController;
         // if (firearmController != null)
         // {
-        //     GClass1492.smethod_1(sb, player.ProfileId, firearmController);
+        //     AnimationDebug.smethod_1(sb, player.ProfileId, firearmController);
         // }
-        GClass1492.smethod_3(sb, player.HandsController);
-        GClass1492.smethod_4(sb, "Hands Animator", player.HandsAnimator.Animator);
-        // GClass1492.smethod_2(sb, player.MovementContext);
-        // GClass1492.smethod_4(sb, "Body Animator", player.BodyAnimatorCommon);
+        AnimationDebug.smethod_3(sb, player.HandsController);
+        AnimationDebug.smethod_4(sb, "Hands Animator", player.HandsAnimator.Animator);
+        // AnimationDebug.smethod_2(sb, player.MovementContext);
+        // AnimationDebug.smethod_4(sb, "Body Animator", player.BodyAnimatorCommon);
     }
 }

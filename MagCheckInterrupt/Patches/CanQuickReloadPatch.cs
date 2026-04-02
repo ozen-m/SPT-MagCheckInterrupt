@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using EFT;
 using HarmonyLib;
 using MagCheckInterrupt.Components;
 using SPT.Reflection.Patching;
@@ -21,7 +20,7 @@ public class CanQuickReloadPatch : ModulePatch
     {
         if (__result) return;
 
-        if (__instance.IfirearmHandsController_0 is Player.FirearmController { CurrentOperation: MagCheckReloadOperation })
+        if (__instance.IfirearmHandsController_0 is FirearmController { CurrentOperation: MagCheckReloadOperation })
         {
             __result = true;
         }

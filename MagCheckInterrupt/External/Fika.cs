@@ -9,6 +9,7 @@ using Fika.Core.Modding;
 using Fika.Core.Modding.Events;
 using Fika.Core.Networking;
 using Fika.Core.Networking.LiteNetLib;
+using Fika.Core.Networking.Packets.FirearmController.SubPackets;
 using MagCheckInterrupt.Components;
 using MagCheckInterrupt.Net;
 using MagCheckInterrupt.Utils;
@@ -21,7 +22,7 @@ public static class Fika
 
     /// <summary>
     /// For the host, the host's config settings.<br/>
-    /// For the client, the client's original config settings
+    /// For the client, the client's original config settings.
     /// </summary>
     private static string[] _cachedConfigValues;
 
@@ -45,10 +46,11 @@ public static class Fika
     }
 
     /// <summary>
-    /// Fika runs FastForward before calling ReloadMag,
+    /// Fika runs <see cref="AbstractHandsController.FastForwardCurrentState"/> before calling <see cref="IFirearmHandsController.ReloadMag"/>,
     /// so we need to send a packet to set ReloadCalled() to other clients.
     /// </summary>
     /// <seealso cref="MagCheckReloadOperation.FastForward"/>
+    /// <seealso cref="ReloadMagPacket.Execute"/>
     public static void SendReloadCalledPacket()
     {
         var networkManager = Singleton<IFikaNetworkManager>.Instance;
@@ -57,7 +59,7 @@ public static class Fika
         var packet = new ReloadCalledPacket(networkManager.NetId);
         networkManager.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
 
-        LoggerUtil.Debug("Fika::SendReloadCalledPacket Sent packet");
+        LoggerUtil.Debug("Fika::SendReloadCalledPacket Packet sent ");
     }
 
     #region HANDLERS
@@ -85,7 +87,7 @@ public static class Fika
         if (!FikaBackendUtils.IsServer) return;
 
         LoggerUtil.Info($"Peer connected, sending config to peer {eventArgs.Peer.Id}");
-        ConfigPacket packet = new(_cachedConfigValues);
+        var packet = new ConfigPacket(_cachedConfigValues);
         Singleton<FikaServer>.Instance.SendDataToPeer(ref packet, DeliveryMethod.ReliableUnordered, eventArgs.Peer);
     }
 
@@ -112,7 +114,7 @@ public static class Fika
 
         if (!CoopHandler.TryGetCoopHandler(out var coopHandler)) return;
         if (!coopHandler.Players.TryGetValue(packet.NetId, out var player)) return;
-        if (player.HandsController is not Player.FirearmController firearmController) return;
+        if (player.HandsController is not FirearmController firearmController) return;
         if (firearmController.CurrentOperation is not MagCheckReloadOperation operation) return;
 
         operation.SetReloadCalled();
@@ -123,7 +125,7 @@ public static class Fika
     private static void OnHostSettingsChanged(object sender, SettingChangedEventArgs eventArgs)
     {
         _cachedConfigValues = ConfigUtil.GetConfigValues(_cachedConfigValues);
-        ConfigPacket packet = new(_cachedConfigValues);
+        var packet = new ConfigPacket(_cachedConfigValues);
         Singleton<FikaServer>.Instance.SendData(ref packet, DeliveryMethod.ReliableUnordered, true);
     }
 

@@ -27,10 +27,9 @@ public static class KeybindsUtil
 
     public static bool AreCheckAndReloadKeysConflicting()
     {
-        if (!_reloadKeybind.KeyCombinationState_0.GetKeysStatus(out var reloadStatus)) return false;
-        if (!_checkKeybind.KeyCombinationState_0.GetKeysStatus(out var checkStatus)) return false;
-
-        return (reloadStatus == EKeyPress.Down || reloadStatus == EKeyPress.Hold)
-            && (checkStatus == EKeyPress.Down || checkStatus == EKeyPress.Hold);
+        return _reloadKeybind.KeyCombinationState_0.GetKeysStatus(out var reloadStatus)
+               && (reloadStatus == EKeyPress.Down || reloadStatus == EKeyPress.Hold)
+               && _checkKeybind.KeyCombinationState_0.GetKeysStatus(out var checkStatus)
+               && (checkStatus == EKeyPress.Down || checkStatus == EKeyPress.Hold);
     }
 }

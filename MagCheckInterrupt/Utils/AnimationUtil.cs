@@ -1,7 +1,6 @@
 ﻿using EFT.InventoryLogic;
 using MagCheckInterrupt.Patches;
 using UnityEngine;
-using AnimatorWrapper = GClass1446;
 
 namespace MagCheckInterrupt.Utils;
 
@@ -17,6 +16,11 @@ public static class AnimationUtil
 
     private static readonly int _chamberCatchCheckHash = Animator.StringToHash("CHECK CHAMBER CATCHED");
     private static readonly int _chamberCatchReloadStartHash = Animator.StringToHash("RELOAD CATCH START");
+
+    public static float GetNormalizedTime(this ObjectInHandsAnimator objectInHandsAnimator, int layerIndex)
+    {
+        return objectInHandsAnimator.Animator.GetCurrentAnimatorStateInfo(layerIndex).normalizedTime;
+    }
 
     /// <summary>
     /// Performs the animation from a magazine check to a reload.

@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using EFT;
 using HarmonyLib;
 using MagCheckInterrupt.Components;
 using MagCheckInterrupt.Utils;
@@ -19,22 +18,22 @@ public class UIFixes
 
 #region PATCHES
 /// <summary>
-/// This allows execution of SwapOperations during a MagCheckReloadOperation.
+/// This allows execution of <see cref="SwapOperationClass"/> during a <see cref="MagCheckReloadOperation"/>.
 /// </summary>
 [IgnoreAutoPatch]
 public class CanExecuteSwapPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return AccessTools.Method(typeof(Player.FirearmController), nameof(Player.FirearmController.CanExecute));
+        return AccessTools.Method(typeof(FirearmController), nameof(FirearmController.CanExecute));
     }
 
     [PatchPostfix]
-    public static void Postfix(Player.FirearmController __instance, GInterface438 operation, ref bool __result)
+    public static void Postfix(FirearmController __instance, IInventoryOperation operation, ref bool __result)
     {
         if (__result) return;
         if (__instance.CurrentOperation is not MagCheckReloadOperation) return;
-        if (operation is not (SwapOperationClass or GClass3397 or GClass3398)) return;
+        if (operation is not (SwapOperationClass or RemoveOperation or AttachOperation)) return;
 
         __result = true;
     }

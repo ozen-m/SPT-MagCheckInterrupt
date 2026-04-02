@@ -9,27 +9,20 @@ using static EFT.Player.FirearmController;
 namespace MagCheckInterrupt.Patches;
 
 /// <summary>
-/// This patch replaces utility operations with our mag check reload operation.
+/// This patch replaces mag check <see cref="UtilityOperation"/> with <see cref="MagCheckReloadOperation"/>.
 /// </summary>
 public class RunUtilityOpPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(GClass2037).GetMethod(nameof(GClass2037.RunUtilityOperation));
+        return typeof(IdlingOperation).GetMethod(nameof(IdlingOperation.RunUtilityOperation));
     }
 
     [PatchPrefix]
-    public static bool Prefix(GClass2037 __instance, GClass2038.EUtilityType utilityType)
+    public static bool Prefix(IdlingOperation __instance, UtilityOperation.EUtilityType utilityType)
     {
-        if (utilityType != GClass2038.EUtilityType.CheckMagazine)
-        {
-            return true;
-        }
-
-        if (__instance.Player_0.IsAI)
-        {
-            return true;
-        }
+        if (utilityType != UtilityOperation.EUtilityType.CheckMagazine) return true;
+        if (__instance.Player_0.IsAI) return true;
 
         if (!WeaponUsesExternalMag(__instance.Weapon_0))
         {
@@ -43,8 +36,9 @@ public class RunUtilityOpPatch : ModulePatch
         }
 
         LoggerUtil.Debug("RunUtilityOpPatch::Prefix Initiate MagCheckReloadOperation");
+
         __instance.Player_0.BodyAnimatorCommon.SetFloat(PlayerAnimator.RELOAD_FLOAT_PARAM_HASH, 1f);
-        __instance.State = Player.EOperationState.Finished;
+        __instance.State = EOperationState.Finished;
         __instance.FirearmController_0.InitiateOperation<MagCheckReloadOperation>().Start(utilityType);
         return false;
     }
@@ -52,6 +46,6 @@ public class RunUtilityOpPatch : ModulePatch
     private static bool WeaponUsesExternalMag(Weapon weapon)
     {
         return weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazine
-            || weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport;
+               || weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport;
     }
 }

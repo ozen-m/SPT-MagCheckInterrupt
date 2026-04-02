@@ -40,8 +40,8 @@ Advanced Configuration
 - `Smoothing Max Delta` - Max delta for the smoothing of the slow animation. A higher value slows/restores the animation faster
 
 ### Compatibility
-- Compatible with [Project Fika](https://forge.sp-tarkov.com/mod/2326/project-fika)
-- Partially compatible with [UI Fixes](https://forge.sp-tarkov.com/mod/1342/ui-fixes). Reload in Place feature is queued instead of transitioning directly into a reload
+- Compatible with [Project Fika](https://forge.sp-tarkov.com/mod/2326/project-fika). Must be installed on the **host** and **all clients**
+- Compatible with [UI Fixes](https://forge.sp-tarkov.com/mod/1342/ui-fixes)' Reload in Place feature
 
 ### Support
 <details>

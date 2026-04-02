@@ -3,11 +3,10 @@ using EFT.InventoryLogic;
 using MagCheckInterrupt.Patches;
 using MagCheckInterrupt.Utils;
 using UnityEngine;
-using static EFT.Player;
 
 namespace MagCheckInterrupt.Components;
 
-public class MagCheckReloadOperation(FirearmController controller) : FirearmController.GClass2038(controller)
+public class MagCheckReloadOperation(FirearmController controller) : UtilityOperation(controller)
 {
 #if DEBUG
     private static PlayerStateDebug _playerStateDebug;
@@ -15,7 +14,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
     private bool _ammoDetailsShown;
     private bool _reloadCalled;
-    private GClass3397 _swapRemoveOperation;
+    private RemoveOperation _swapRemoveOperation;
 
     // Slow down animation fields
     private float _currentSpeed = 1f;
@@ -43,7 +42,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     {
         if (State != EOperationState.Ready) return;
 
-        var normalizedTime = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).normalizedTime;
+        var normalizedTime = FirearmsAnimator_0.GetNormalizedTime(FirearmsAnimator.HANDS_LAYER_INDEX);
         if (!_ammoDetailsShown && normalizedTime > ConfigUtil.ReloadWindowStart.Value)
         {
             // Show ammo details at the start of the reload window
@@ -100,12 +99,12 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     {
         if (State != EOperationState.Ready) return false;
 
-        var normalizedTime = FirearmsAnimator_0.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).normalizedTime;
+        var normalizedTime = FirearmsAnimator_0.GetNormalizedTime(FirearmsAnimator.HANDS_LAYER_INDEX);
         return normalizedTime > ConfigUtil.ReloadWindowStart.Value && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
     }
 
     /// <summary>
-    /// Based on <see cref="FirearmController.GClass2037.ReloadMag"/>
+    /// Based on <see cref="IdlingOperation.ReloadMag"/>
     /// </summary>
     public override void ReloadMag(MagazineItemClass magazine, ItemAddress itemAddress, Callback finishCallback, Callback startCallback)
     {
@@ -114,7 +113,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
         DisableAimingOnReload();
         SetTriggerPressed(false);
-        var reloadResult = FirearmController.GClass2006.Run(
+        var reloadResult = ReloadResult.Run(
             Player_0.InventoryController,
             Weapon_0,
             magazine,
@@ -131,12 +130,12 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
         this.TransitionToReload(false, false);
         State = EOperationState.Finished;
-        FirearmController_0.InitiateOperation<FirearmController.GClass2016>().Start(reloadResult.Value, finishCallback);
+        FirearmController_0.InitiateOperation<ReloadOperation>().Start(reloadResult.Value, finishCallback);
         startCallback?.Succeed();
     }
 
     /// <summary>
-    /// Based on <see cref="FirearmController.GClass2037.QuickReloadMag"/>
+    /// Based on <see cref="IdlingOperation.QuickReloadMag"/>
     /// </summary>
     public override void QuickReloadMag(MagazineItemClass magazine, Callback finishCallback, Callback startCallback)
     {
@@ -145,7 +144,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
         DisableAimingOnReload();
         SetTriggerPressed(false);
-        var reloadResult = FirearmController.GClass2006.Run(
+        var reloadResult = ReloadResult.Run(
             Player_0.InventoryController,
             Weapon_0,
             magazine,
@@ -162,7 +161,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
         this.TransitionToReload(true, false);
         State = EOperationState.Finished;
-        FirearmController_0.InitiateOperation<FirearmController.GClass2016>().Start(reloadResult.Value, finishCallback);
+        FirearmController_0.InitiateOperation<ReloadOperation>().Start(reloadResult.Value, finishCallback);
         startCallback?.Succeed();
     }
 
@@ -170,9 +169,9 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
     /// UI Fixes' reload in place feature uses a SwapOperation.
     /// This override handles that swap.
     /// </summary>
-    public override void Execute(GInterface438 operation, Callback callback)
+    public override void Execute(IInventoryOperation operation, Callback callback)
     {
-        if (operation is not GInterface443 { Item1: MagazineItemClass } oneItemOperation)
+        if (operation is not IOneItemOperation { Item1: MagazineItemClass } oneItemOperation)
         {
             base.Execute(operation, callback);
             return;
@@ -199,21 +198,23 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             {
                 // Should not be null at this point, start idle operation
                 LoggerUtil.Error("MagCheckReloadOperation::Execute Something unexpected happened while swapping magazines!");
-                callback.Fail("Remove magazine from weapon operation was not executed?");
+                callback.Fail("Remove magazine operation is missing during execution of swap reload"); // Throws
 
                 State = EOperationState.Finished;
-                FirearmController_0.InitiateOperation<FirearmController.GClass2037>().Start(null);
+                FirearmController_0.InitiateOperation<IdlingOperation>().Start(null);
                 return;
             }
 
             State = EOperationState.Finished;
             FirearmController_0.InitiateOperation<SwapReloadOperation>()
-                .Start((MagazineItemClass)_swapRemoveOperation.Item_0, (Slot)_swapRemoveOperation.ItemAddress_0.Container, callback);
+               .Start((MagazineItemClass)_swapRemoveOperation.Item_0, (Slot)_swapRemoveOperation.ItemAddress_0.Container, callback);
             return;
         }
 
         // Remove magazine operation
-        if (oneItemOperation.From1 is not null && oneItemOperation.From1.IsChildOf(Weapon_0) && oneItemOperation is GClass3397 removeOp)
+        if (oneItemOperation.From1 is not null
+            && oneItemOperation.From1.IsChildOf(Weapon_0)
+            && oneItemOperation is RemoveOperation removeOp)
         {
             LoggerUtil.Debug("MagCheckReloadOperation::Execute Remove mag operation...skipped");
             _swapRemoveOperation = removeOp;
@@ -250,7 +251,7 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
 
         if (KeybindsUtil.AreCheckAndReloadKeysConflicting())
         {
-            ContinuousReloadPatch.SkipReload();
+            ReloadConflictPatch.SkipReload();
         }
 
         base.OnIdleStartEvent();

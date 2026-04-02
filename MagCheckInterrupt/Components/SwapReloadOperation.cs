@@ -4,18 +4,17 @@ using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using MagCheckInterrupt.Utils;
-using static EFT.Player;
 
 namespace MagCheckInterrupt.Components;
 
 /// <summary>
 /// Combines a remove and insert magazine operation
 /// </summary>
-public class SwapReloadOperation(FirearmController controller) : FirearmController.GClass2013(controller)
+public class SwapReloadOperation(FirearmController controller) : FirearmOperation(controller)
 {
     private Slot _weaponMagazineSlot;
     private Callback _finishCallback;
-    private FirearmController.GClass2005 _insertMagResult;
+    private AttachModResult _insertMagResult;
 
     private bool _isMagazineWithBelt;
     private bool _magPulledOutFromWeapon;
@@ -27,8 +26,7 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
     private bool _ammoRemovedFromChamber;
 
     /// <summary>
-    /// Does both RemoveMagOperation (<see cref="FirearmController.GClass2050"/>)
-    /// and InsertMagOperation (<see cref="FirearmController.GClass2039"/>
+    /// Does both <see cref="RemoveModOperation"/> and <see cref="AttachModOperation"/>
     /// </summary>
     /// <param name="magazine">Removed magazine</param>
     /// <param name="from">Slot magazine was removed from</param>
@@ -69,12 +67,12 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
             FirearmsAnimator_0.SetLayerWeight(FirearmsAnimator_0.MALFUNCTION_LAYER_INDEX, 0);
         }
 
-        var boltCatch = Weapon_0.IsBoltCatch
-                     && Weapon_0.ChamberAmmoCount == 1
-                     && !Weapon_0.ManualBoltCatch
-                     && !Weapon_0.MustBoltBeOpennedForExternalReload
-                     && !Weapon_0.MustBoltBeOpennedForInternalReload;
-        if (boltCatch)
+        // isReleased
+        if (Weapon_0.IsBoltCatch
+            && Weapon_0.ChamberAmmoCount == 1
+            && !Weapon_0.ManualBoltCatch
+            && !Weapon_0.MustBoltBeOpennedForExternalReload
+            && !Weapon_0.MustBoltBeOpennedForInternalReload)
         {
             FirearmsAnimator_0.SetBoltCatch(false);
         }
@@ -132,7 +130,7 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
         }
 
         // Run insert magazine
-        var insertResult = FirearmController.GClass2005.Run(Player_0.InventoryController, Weapon_0, Player_0.ProfileId);
+        var insertResult = AttachModResult.Run(Player_0.InventoryController, Weapon_0, Player_0.ProfileId);
         if (insertResult.Failed)
         {
             LoggerUtil.Error($"MagCheckReloadOperation::OnMagPuttedToRig Insert mag operation failed: {insertResult.Error}");
@@ -140,7 +138,7 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
             _finishCallback.Invoke(insertResult);
 
             State = EOperationState.Finished;
-            FirearmController_0.InitiateOperation<FirearmController.GClass2037>().Start(null);
+            FirearmController_0.InitiateOperation<IdlingOperation>().Start(null);
             return;
         }
 
@@ -161,17 +159,10 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
             return;
         }
 
-        AmmoItemClass ammoItemClass = null;
         foreach (var chamber in Weapon_0.Chambers)
         {
-            ammoItemClass = chamber.ContainedItem as AmmoItemClass;
-            if (ammoItemClass is { IsUsed: false })
-            {
-                break;
-            }
-        }
-        if (ammoItemClass is not null)
-        {
+            if (chamber.ContainedItem is not AmmoItemClass { IsUsed: false } ammoItemClass) continue;
+
             WeaponManagerClass.MoveAmmoFromChamberToShellPort(ammoItemClass.IsUsed, 0);
             WeaponManagerClass.StartSpawnShell(Player_0.Velocity * 0.66f, 0);
             return;
@@ -200,7 +191,6 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
             {
                 // Below line is missing in GClass2050.RemoveAmmoFromChamber, but is in GClass2016.RemoveAmmoFromChamber
                 WeaponManagerClass.ThrowPatronAsLoot(ammoInChamber, Player_0, "SwapReloadOperation.RemoveAmmoFromChamber");
-
                 break;
             }
         }
@@ -242,12 +232,11 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
         FirearmsAnimator_0.SetMagInWeapon(true);
         FirearmsAnimator_0.SetAmmoCompatible(_insertMagResult.AmmoCompatible);
 
-        var toEndOperation = !_insertMagResult.HasNewAmmo
-                          && (Weapon_0.MalfState.State != Weapon.EMalfunctionState.Misfire
-                           || !Weapon_0.MalfState.IsKnownMalfunction(Player_0.ProfileId)
-                           || !_insertMagResult.AmmoCompatible
-                           || _insertMagResult.Magazine.Count <= 0);
-        if (toEndOperation)
+        if (!_insertMagResult.HasNewAmmo
+            && (Weapon_0.MalfState.State != Weapon.EMalfunctionState.Misfire
+                || !Weapon_0.MalfState.IsKnownMalfunction(Player_0.ProfileId)
+                || !_insertMagResult.AmmoCompatible
+                || _insertMagResult.Magazine.Count <= 0))
         {
             EndOperation();
         }
@@ -301,12 +290,11 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
         FirearmController_0.IsTriggerPressed = false;
         FirearmController_0.IsAiming = false;
         State = EOperationState.Finished; // Idk why BSG set this twice
-        FirearmController_0.InitiateOperation<FirearmController.GClass2053>().Start(onHidden, fastDrop, nextControllerItem);
+        FirearmController_0.InitiateOperation<RemoveWeaponOperation>().Start(onHidden, fastDrop, nextControllerItem);
     }
 
     public override bool CanChangeLightState(FirearmLightStateStruct[] lightsStates)
     {
-        LoggerUtil.Debug("SwapReloadOperation::CanChangeLightState");
         return false;
     }
 
@@ -334,22 +322,22 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
         FirearmsAnimator_0.SetMagTypeNew(_insertMagResult.Magazine.magAnimationIndex);
         FirearmsAnimator_0.SetMagTypeCurrent(_insertMagResult.Magazine.magAnimationIndex);
 
-        var boltCatch = Weapon_0.IsBoltCatch
-                     && Weapon_0.ChamberAmmoCount == 1
-                     && !_insertMagResult.HasNewAmmo
-                     && !Weapon_0.ManualBoltCatch
-                     && !Weapon_0.MustBoltBeOpennedForExternalReload
-                     && !Weapon_0.MustBoltBeOpennedForInternalReload;
-        if (boltCatch)
+        // isReleased
+        if (Weapon_0.IsBoltCatch
+            && Weapon_0.ChamberAmmoCount == 1
+            && !_insertMagResult.HasNewAmmo
+            && !Weapon_0.ManualBoltCatch
+            && !Weapon_0.MustBoltBeOpennedForExternalReload
+            && !Weapon_0.MustBoltBeOpennedForInternalReload)
         {
             FirearmsAnimator_0.SetBoltCatch(false);
         }
 
-        var isMalfunction = Weapon_0.MalfState.State == Weapon.EMalfunctionState.Misfire
-                         && Weapon_0.MalfState.IsKnownMalfunction(Player_0.ProfileId)
-                         && _insertMagResult.Magazine.Count > 0
-                         && _insertMagResult.AmmoCompatible;
-        if (isMalfunction)
+        // isMalfunction
+        if (Weapon_0.MalfState.State == Weapon.EMalfunctionState.Misfire
+            && Weapon_0.MalfState.IsKnownMalfunction(Player_0.ProfileId)
+            && _insertMagResult.Magazine.Count > 0
+            && _insertMagResult.AmmoCompatible)
         {
             FirearmsAnimator_0.SetAmmoInChamber(0f);
             FirearmsAnimator_0.SetLayerWeight(FirearmsAnimator_0.MALFUNCTION_LAYER_INDEX, 0);
@@ -362,7 +350,7 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
 
         State = EOperationState.Finished;
         FirearmController_0.RecalculateErgonomic();
-        FirearmController_0.InitiateOperation<FirearmController.GClass2037>().Start(null);
+        FirearmController_0.InitiateOperation<IdlingOperation>().Start(null);
         _finishCallback?.Succeed();
         FirearmController_0.WeaponModified();
     }

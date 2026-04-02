@@ -9,7 +9,7 @@ namespace MagCheckInterrupt.Patches;
 /// </summary>
 public class ReloadFastAnimationPatch : ModulePatch
 {
-    private static bool _shouldSkipReloadAnimation;
+    private static bool _toSkip;
 
     protected override MethodBase GetTargetMethod()
     {
@@ -19,15 +19,15 @@ public class ReloadFastAnimationPatch : ModulePatch
     [PatchPrefix]
     public static bool Prefix(FirearmsAnimator __instance)
     {
-        if (!_shouldSkipReloadAnimation) return true;
+        if (!_toSkip) return true;
 
         LoggerUtil.Debug("ReloadAnimationPatch::Prefix Skipped reload animation");
-        _shouldSkipReloadAnimation = false;
+        _toSkip = false;
         return false;
     }
 
     public static void SkipReloadAnimation()
     {
-        _shouldSkipReloadAnimation = true;
+        _toSkip = true;
     }
 }

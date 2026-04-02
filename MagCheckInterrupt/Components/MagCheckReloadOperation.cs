@@ -112,6 +112,8 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
         LoggerUtil.Debug("MagCheckReloadOperation::ReloadMag");
         FirearmsAnimator_0.SetAnimationSpeed(1f);
 
+        DisableAimingOnReload();
+        SetTriggerPressed(false);
         var reloadResult = FirearmController.GClass2006.Run(
             Player_0.InventoryController,
             Weapon_0,
@@ -127,7 +129,38 @@ public class MagCheckReloadOperation(FirearmController controller) : FirearmCont
             return;
         }
 
-        this.TransitionToReload(false);
+        this.TransitionToReload(false, false);
+        State = EOperationState.Finished;
+        FirearmController_0.InitiateOperation<FirearmController.GClass2016>().Start(reloadResult.Value, finishCallback);
+        startCallback?.Succeed();
+    }
+
+    /// <summary>
+    /// Based on <see cref="FirearmController.GClass2037.QuickReloadMag"/>
+    /// </summary>
+    public override void QuickReloadMag(MagazineItemClass magazine, Callback finishCallback, Callback startCallback)
+    {
+        LoggerUtil.Debug("MagCheckReloadOperation::QuickReloadMag");
+        FirearmsAnimator_0.SetAnimationSpeed(1f);
+
+        DisableAimingOnReload();
+        SetTriggerPressed(false);
+        var reloadResult = FirearmController.GClass2006.Run(
+            Player_0.InventoryController,
+            Weapon_0,
+            magazine,
+            true,
+            Weapon_0.MalfState.IsKnownMalfunction(Player_0.ProfileId),
+            null
+        );
+        if (reloadResult.Failed)
+        {
+            LoggerUtil.Error($"MagCheckReloadOperation::QuickReloadMag Failed to reload. Error: {reloadResult.Error}");
+            finishCallback?.Invoke(reloadResult);
+            return;
+        }
+
+        this.TransitionToReload(true, false);
         State = EOperationState.Finished;
         FirearmController_0.InitiateOperation<FirearmController.GClass2016>().Start(reloadResult.Value, finishCallback);
         startCallback?.Succeed();

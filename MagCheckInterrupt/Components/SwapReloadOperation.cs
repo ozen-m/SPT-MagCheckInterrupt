@@ -40,11 +40,11 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
         _finishCallback = finishCallback;
         _isMagazineWithBelt = magazine.IsMagazineWithBelt;
         base.Start();
-        this.TransitionToReload(true);
+        this.TransitionToReload(false, true);
 
         FirearmsAnimator_0.SetFire(false);
         FirearmsAnimator_0.SetIsExternalMag(true);
-        FirearmsAnimator_0.SetCanReload(true);
+        FirearmsAnimator_0.SetCanReload(true); // True to proceed with the next magazine
         Player_0.MovementContext.SetBlindFire(0);
         Player_0.BodyAnimatorCommon.SetFloat(PlayerAnimator.RELOAD_FLOAT_PARAM_HASH, 1f);
         _blockTriggerField(FirearmController_0) = true;

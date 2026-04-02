@@ -10,24 +10,36 @@ public static class AnimationUtil
 {
     private static readonly int _magCheckHash = Animator.StringToHash("CHECK");
     private static readonly int _magReloadOutHash = Animator.StringToHash("RELOAD OUT");
+    private static readonly int _magReloadOutFastHash = Animator.StringToHash("RELOAD OUT ALL");
+
     private static readonly int _magWithInternalCheckHash = Animator.StringToHash("CHECK MAG");
     private static readonly int _magWithInternalReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
+    private static readonly int _magWithInternalReloadOutFastHash = Animator.StringToHash("RELOAD OUT ALL MAG");
 
     /// <summary>
     /// Performs the animation from a magazine check to a reload.
     /// Also includes, hiding the ammo count and sending of Fika packet.
     /// </summary>
+    /// <param name="animationOperation"></param>
+    /// <param name="isFast">True if the reload is a quick reload</param>
     /// <param name="isSwap">True if the reload is triggered by a swap operation, done by UI Fixes; otherwise, false (normal reload)</param>
-    public static void TransitionToReload(this FirearmController.GClass2013 animationOperation, bool isSwap)
+    public static void TransitionToReload(this FirearmController.GClass2013 animationOperation, bool isFast = false, bool isSwap = false)
     {
         var animator = animationOperation.FirearmsAnimator_0.Animator;
-        if (animator is AnimatorWrapper wrapper && wrapper.GetReloadOutHash(out var reloadOutHash, animationOperation.Weapon_0))
+        if (animator is AnimatorWrapper wrapper && wrapper.TryGetReloadOutHash(out var reloadOutHash, isFast: isFast, weapon: animationOperation.Weapon_0))
         {
             // GClass2016.Start calls FirearmsAnimator.Reload(bool b), so we need to skip the reload animation and do our own crossfade.
             // But if it's a swap reload, no need to skip the reload animation, it's not called by the insert mag operation.
             if (!isSwap)
             {
-                ReloadAnimationPatch.SkipReloadAnimation();
+                if (isFast)
+                {
+                    ReloadFastAnimationPatch.SkipReloadAnimation();
+                }
+                else
+                {
+                    ReloadAnimationPatch.SkipReloadAnimation();
+                }
             }
             wrapper.Animator_0.CrossFade(
                 reloadOutHash,
@@ -55,17 +67,17 @@ public static class AnimationUtil
         AmmoDetailsPatch.HideAmmoCount();
     }
 
-    public static bool GetReloadOutHash(this IAnimator animator, out int reloadOutHash, Weapon weapon = null)
+    public static bool TryGetReloadOutHash(this IAnimator animator, out int reloadOutHash, bool isFast = false, Weapon weapon = null)
     {
         var currentStateHash = animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
         if (currentStateHash == _magCheckHash)
         {
-            reloadOutHash = _magReloadOutHash;
+            reloadOutHash = isFast ? _magReloadOutFastHash : _magReloadOutHash;
             return true;
         }
         if (currentStateHash == _magWithInternalCheckHash)
         {
-            reloadOutHash = _magWithInternalReloadOutHash;
+            reloadOutHash = isFast ? _magWithInternalReloadOutFastHash : _magWithInternalReloadOutHash;
             return true;
         }
 

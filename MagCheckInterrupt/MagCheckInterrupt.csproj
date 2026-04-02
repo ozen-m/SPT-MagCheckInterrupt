@@ -28,6 +28,10 @@
       <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="DissonanceVoip">
+      <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\DissonanceVoip.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Fika.Core">
       <HintPath>..\references\Fika.Core.dll</HintPath>
       <Private>false</Private>
@@ -70,6 +74,7 @@
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>$(SPTPath)EscapeFromTarkov_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>

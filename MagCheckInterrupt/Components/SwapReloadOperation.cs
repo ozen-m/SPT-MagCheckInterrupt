@@ -196,8 +196,11 @@ public class SwapReloadOperation(FirearmController controller) : FirearmControll
 
         foreach (var slot in Weapon_0.Chambers)
         {
-            if (slot.ContainedItem is AmmoItemClass { IsUsed: false } && slot.RemoveItem(false).Succeeded)
+            if (slot.ContainedItem is AmmoItemClass { IsUsed: false } ammoInChamber && slot.RemoveItem(false).Succeeded)
             {
+                // Below line is missing in GClass2050.RemoveAmmoFromChamber, but is in GClass2016.RemoveAmmoFromChamber
+                WeaponManagerClass.ThrowPatronAsLoot(ammoInChamber, Player_0, "SwapReloadOperation.RemoveAmmoFromChamber");
+
                 break;
             }
         }

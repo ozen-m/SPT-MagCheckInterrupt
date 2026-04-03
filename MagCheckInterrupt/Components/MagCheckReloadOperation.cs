@@ -95,6 +95,18 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
         base.Reset();
     }
 
+    public override void OnUtilityOperationStartEvent()
+    {
+        base.OnUtilityOperationStartEvent();
+
+        if (!Player_0.FirstPersonPointOfView || ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Press) return;
+
+        if (KeybindsUtil.AreCheckAndReloadKeysConflicting())
+        {
+            ReloadConflictPatch.SkipReload();
+        }
+    }
+
     public override bool CanStartReload()
     {
         if (State != EOperationState.Ready) return false;
@@ -249,12 +261,14 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
     {
         LoggerUtil.Debug("MagCheckReloadOperation::OnIdleStartEvent");
 
+        base.OnIdleStartEvent();
+
+        if (!Player_0.FirstPersonPointOfView || ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Release) return;
+
         if (KeybindsUtil.AreCheckAndReloadKeysConflicting())
         {
             ReloadConflictPatch.SkipReload();
         }
-
-        base.OnIdleStartEvent();
     }
 
     public void SetReloadCalled()

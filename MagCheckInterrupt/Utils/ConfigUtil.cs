@@ -8,6 +8,7 @@ namespace MagCheckInterrupt.Utils;
 
 public static class ConfigUtil
 {
+    public static ConfigEntry<KeybindsUtil.EReloadMode> ReloadMode { get; private set; }
     public static ConfigEntry<float> ReloadWindowStart { get; private set; }
     public static ConfigEntry<float> ReloadWindowEnd { get; private set; }
     public static ConfigEntry<bool> SlowAnimation { get; private set; }
@@ -54,6 +55,16 @@ public static class ConfigUtil
             )
         );
 
+        ReloadMode = _configFile.Bind(
+            "General",
+            "Reload Mode",
+            KeybindsUtil.EReloadMode.Press,
+            new ConfigDescription(
+                "Special case for when reload and mag check keybinds are conflicting",
+                null,
+                new ConfigurationManagerAttributes { Order = 41 }
+            )
+        );
         ReloadWindowStart = _configFile.Bind(
             "General",
             "Reload Window Start",

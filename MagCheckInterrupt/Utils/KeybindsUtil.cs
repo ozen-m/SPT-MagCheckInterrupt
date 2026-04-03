@@ -1,4 +1,5 @@
-﻿using EFT.InputSystem;
+﻿using System.ComponentModel;
+using EFT.InputSystem;
 
 namespace MagCheckInterrupt.Utils;
 
@@ -31,5 +32,14 @@ public static class KeybindsUtil
                && (reloadStatus == EKeyPress.Down || reloadStatus == EKeyPress.Hold)
                && _checkKeybind.KeyCombinationState_0.GetKeysStatus(out var checkStatus)
                && (checkStatus == EKeyPress.Down || checkStatus == EKeyPress.Hold);
+    }
+
+    public enum EReloadMode
+    {
+        [Description("Press to Reload")]
+        Press,
+
+        [Description("Release to Reload")]
+        Release,
     }
 }

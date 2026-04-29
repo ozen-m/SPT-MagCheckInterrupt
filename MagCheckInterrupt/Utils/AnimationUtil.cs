@@ -14,6 +14,10 @@ public static class AnimationUtil
     private static readonly int _magWithInternalReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
     private static readonly int _magWithInternalReloadOutFastHash = Animator.StringToHash("RELOAD OUT ALL MAG");
 
+    // WTT-Content Backport AS Val Mod4
+    private const int _magCheckValHash = 1180283072;
+    private const int _magReloadOutValHash = 905331964;
+
     private static readonly int _chamberCatchCheckHash = Animator.StringToHash("CHECK CHAMBER CATCHED");
     private static readonly int _chamberCatchReloadStartHash = Animator.StringToHash("RELOAD CATCH START");
 
@@ -90,6 +94,11 @@ public static class AnimationUtil
         if (currentStateHash == _magWithInternalCheckHash)
         {
             reloadOutHash = isFast ? _magWithInternalReloadOutFastHash : _magWithInternalReloadOutHash;
+            return true;
+        }
+        if (currentStateHash == _magCheckValHash)
+        {
+            reloadOutHash = isFast ? _magReloadOutFastHash : _magReloadOutValHash;
             return true;
         }
         if (currentStateHash == _chamberCatchCheckHash)

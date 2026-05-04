@@ -3,6 +3,7 @@ using Comfort.Common;
 using EFT;
 using EFT.UI;
 using HarmonyLib;
+using MagCheckInterrupt.Components;
 using SPT.Reflection.Patching;
 
 namespace MagCheckInterrupt.Patches;
@@ -16,6 +17,7 @@ public class AmmoDetailsPatch : ModulePatch
         AccessTools.FieldRefAccess<EftBattleUIScreen, AmmoCountPanel>("_ammoCountPanel");
 
     private static AmmoDetails _lastAmmoDetail;
+    private static bool _hasLastAmmoDetail;
 
     protected override MethodBase GetTargetMethod()
     {
@@ -32,12 +34,23 @@ public class AmmoDetailsPatch : ModulePatch
         bool foldingMechanimWeapon
     )
     {
+        if (!ShouldDelayAmmoDetails())
+        {
+            return true;
+        }
+
         _lastAmmoDetail = new AmmoDetails(ammoCount, maxAmmoCount, mastering, details, foldingMechanimWeapon);
+        _hasLastAmmoDetail = true;
         return false;
     }
 
     public static void ShowLastAmmoDetail()
     {
+        if (!_hasLastAmmoDetail)
+        {
+            return;
+        }
+
         Singleton<CommonUI>.Instance.EftBattleUIScreen.ShowAmmoDetails(
             _lastAmmoDetail.AmmoCount,
             _lastAmmoDetail.MaxAmmoCount,
@@ -47,10 +60,23 @@ public class AmmoDetailsPatch : ModulePatch
         );
     }
 
+    public static void ClearLastAmmoDetail()
+    {
+        _hasLastAmmoDetail = false;
+    }
+
     public static void HideAmmoCount()
     {
         var ammoCountPanel = _ammoCountPanelField(Singleton<CommonUI>.Instance.EftBattleUIScreen);
         ammoCountPanel.Hide();
+    }
+
+    private static bool ShouldDelayAmmoDetails()
+    {
+        return Singleton<GameWorld>.Instance?.MainPlayer?.HandsController is FirearmController
+        {
+            CurrentOperation: MagCheckReloadOperation,
+        };
     }
 
     private readonly struct AmmoDetails(int ammoCount, int maxAmmoCount, int mastering, string details, bool foldingMechanimWeapon)

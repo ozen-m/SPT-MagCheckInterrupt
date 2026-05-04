@@ -26,17 +26,12 @@ public class RunUtilityOpPatch : ModulePatch
 
         if (!WeaponUsesExternalMag(__instance.Weapon_0))
         {
-            // Show ammo details since we skip it through `AmmoDetailsPatch`
-            if (__instance.Player_0.FirstPersonPointOfView)
-            {
-                AmmoDetailsPatch.ShowLastAmmoDetail();
-            }
-
             return true;
         }
 
         LoggerUtil.Debug("RunUtilityOpPatch::Prefix Initiate MagCheckReloadOperation");
 
+        AmmoDetailsPatch.ClearLastAmmoDetail();
         __instance.Player_0.BodyAnimatorCommon.SetFloat(PlayerAnimator.RELOAD_FLOAT_PARAM_HASH, 1f);
         __instance.State = EOperationState.Finished;
         __instance.FirearmController_0.InitiateOperation<MagCheckReloadOperation>().Start(utilityType);

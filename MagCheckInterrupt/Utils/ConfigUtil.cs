@@ -180,10 +180,10 @@ public static class ConfigUtil
     {
         if (values.Length != _allConfigs.Count)
         {
-            LoggerUtil.Error(
+            L.Error(
                 $"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_allConfigs.Count}"
             );
-            NotificationManagerClass.DisplayWarningNotification(
+            NotificationManager.DisplayWarningNotification(
                 "MagCheckInterrupt: Unable to set config values. Different mod version with the host?",
                 ENotificationDurationType.Long
             );

@@ -9,7 +9,6 @@ using Fika.Core.Modding;
 using Fika.Core.Modding.Events;
 using Fika.Core.Networking;
 using Fika.Core.Networking.LiteNetLib;
-using Fika.Core.Networking.Packets.FirearmController.SubPackets;
 using MagCheckInterrupt.Components;
 using MagCheckInterrupt.Net;
 using MagCheckInterrupt.Utils;
@@ -30,7 +29,7 @@ public static class Fika
 
     public static void Init()
     {
-        LoggerUtil.Info("Initializing Fika compatibility");
+        L.Info("Initializing Fika compatibility");
 
         IsPresent = true;
 
@@ -43,6 +42,14 @@ public static class Fika
         FikaEventDispatcher.SubscribeEvent(new Action<PeerConnectedEvent>(OnPeerConnected));
         FikaEventDispatcher.SubscribeEvent(new Action<FikaRaidStartedEvent>(OnRaidStarted));
         FikaEventDispatcher.SubscribeEvent(new Action<FikaGameEndedEvent>(OnGameEnded));
+    }
+
+    public static void Disable()
+    {
+        FikaEventDispatcher.UnsubscribeEvent(new Action<FikaNetworkManagerCreatedEvent>(OnFikaNetworkManagerCreated));
+        FikaEventDispatcher.UnsubscribeEvent(new Action<PeerConnectedEvent>(OnPeerConnected));
+        FikaEventDispatcher.UnsubscribeEvent(new Action<FikaRaidStartedEvent>(OnRaidStarted));
+        FikaEventDispatcher.UnsubscribeEvent(new Action<FikaGameEndedEvent>(OnGameEnded));
     }
 
     /// <summary>
@@ -59,7 +66,7 @@ public static class Fika
         var packet = new ReloadCalledPacket(networkManager.NetId);
         networkManager.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
 
-        LoggerUtil.Debug("Fika::SendReloadCalledPacket Packet sent ");
+        L.Debug("Fika::SendReloadCalledPacket Packet sent ");
     }
 
     #region HANDLERS
@@ -86,7 +93,7 @@ public static class Fika
     {
         if (!FikaBackendUtils.IsServer) return;
 
-        LoggerUtil.Info($"Peer connected, sending config to peer {eventArgs.Peer.Id}");
+        L.Info($"Peer connected, sending config to peer {eventArgs.Peer.Id}");
         var packet = new ConfigPacket(_cachedConfigValues);
         Singleton<FikaServer>.Instance.SendDataToPeer(ref packet, DeliveryMethod.ReliableUnordered, eventArgs.Peer);
     }
@@ -95,8 +102,8 @@ public static class Fika
     {
         if (ev.IsServer || _configReceivedFromHost) return;
 
-        LoggerUtil.Error("Config packet not received! MagCheckInterrupt missing from host?");
-        NotificationManagerClass.DisplayWarningNotification(
+        L.Error("Config packet not received! MagCheckInterrupt missing from host?");
+        NotificationManager.DisplayWarningNotification(
             "MagCheckInterrupt config sync failed, desync will occur! MagCheckInterrupt is required on the host or you have a different mod version with the host.",
             ENotificationDurationType.Infinite
         );
@@ -104,13 +111,13 @@ public static class Fika
 
     private static void OnReceiveConfigPacket(ConfigPacket packet)
     {
-        LoggerUtil.Info("Received config packet, setting values from host");
+        L.Info("Received config packet, setting values from host");
         _configReceivedFromHost = ConfigUtil.SetConfigValues(packet.Config);
     }
 
     private static void OnReceiveReloadCalledPacket(ReloadCalledPacket packet)
     {
-        LoggerUtil.Debug("Fika::OnReceiveReloadCalledPacket Received ReloadCalledPacket");
+        L.Debug("Fika::OnReceiveReloadCalledPacket Received ReloadCalledPacket");
 
         if (!CoopHandler.TryGetCoopHandler(out var coopHandler)) return;
         if (!coopHandler.Players.TryGetValue(packet.NetId, out var player)) return;
@@ -119,7 +126,7 @@ public static class Fika
 
         operation.SetReloadCalled();
 
-        LoggerUtil.Debug("Fika::OnReceiveReloadCalledPacket SetReloadCalled");
+        L.Debug("Fika::OnReceiveReloadCalledPacket SetReloadCalled");
     }
 
     private static void OnHostSettingsChanged(object sender, SettingChangedEventArgs eventArgs)

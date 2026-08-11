@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using EFT;
 using HarmonyLib;
 using MagCheckInterrupt.Components;
 using SPT.Reflection.Patching;
@@ -12,15 +13,15 @@ public class CanQuickReloadPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return AccessTools.PropertyGetter(typeof(Class1730), nameof(Class1730.Boolean_1));
+        return AccessTools.PropertyGetter(typeof(FirearmHandsInputTranslator), nameof(FirearmHandsInputTranslator.InIdleStateForInvokeOperation));
     }
 
     [PatchPostfix]
-    protected static void Postfix(Class1730 __instance, ref bool __result)
+    protected static void Postfix(FirearmHandsInputTranslator __instance, ref bool __result)
     {
         if (__result) return;
 
-        if (__instance.IfirearmHandsController_0 is FirearmController { CurrentOperation: MagCheckReloadOperation })
+        if (__instance._controller is FirearmController { CurrentOperation: MagCheckReloadOperation })
         {
             __result = true;
         }

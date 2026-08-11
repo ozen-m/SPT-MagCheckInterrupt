@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using EFT;
 using MagCheckInterrupt.Components;
 using SPT.Reflection.Patching;
 
@@ -14,11 +15,11 @@ public class ReloadConflictPatch : ModulePatch
 
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(Class1730).GetMethod(nameof(Class1730.method_13));
+        return typeof(FirearmHandsInputTranslator).GetMethod(nameof(FirearmHandsInputTranslator.Reload));
     }
 
     [PatchPrefix]
-    protected static bool Prefix(Class1730 __instance)
+    protected static bool Prefix(FirearmHandsInputTranslator __instance)
     {
         if (!_toSkip) return true;
 

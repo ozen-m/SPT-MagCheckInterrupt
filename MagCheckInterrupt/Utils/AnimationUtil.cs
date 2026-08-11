@@ -6,6 +6,7 @@ namespace MagCheckInterrupt.Utils;
 
 public static class AnimationUtil
 {
+    // TODO: Convert to dict?
     private static readonly int _magCheckHash = Animator.StringToHash("CHECK");
     private static readonly int _magReloadOutHash = Animator.StringToHash("RELOAD OUT");
     private static readonly int _magReloadOutFastHash = Animator.StringToHash("RELOAD OUT ALL");
@@ -34,16 +35,16 @@ public static class AnimationUtil
     /// <param name="isSwap">True if triggered by a swap operation</param>
     public static void TransitionToReload(this FirearmOperation operation, bool isFast = false, bool isSwap = false)
     {
-        if (operation.FirearmsAnimator_0.Animator is not AnimatorWrapper wrapper)
+        if (operation.FirearmsAnimator.Animator is not UnityAnimatorWrapper wrapper)
         {
-            var typeFullName = operation.FirearmsAnimator_0.Animator.GetType().FullName;
-            LoggerUtil.Error($"MagCheckReloadOperation::TransitionToReload Cannot transition directly into a reload. {typeFullName}");
+            var typeFullName = operation.FirearmsAnimator.Animator.GetType().FullName;
+            L.Error($"MagCheckReloadOperation::TransitionToReload Cannot transition directly into a reload. {typeFullName}");
             return;
         }
 
         DoReloadCrossfade(operation, wrapper, isFast, isSwap);
 
-        if (!operation.Player_0.FirstPersonPointOfView) return;
+        if (!operation.Player.FirstPersonPointOfView) return;
 
         // We don't want observed players re-sending packets and
         // our packet needs to be sent first before Fika's reload packet (ReloadMag.startCallback).
@@ -56,9 +57,9 @@ public static class AnimationUtil
         AmmoDetailsPatch.HideAmmoCount();
     }
 
-    private static void DoReloadCrossfade(FirearmOperation operation, AnimatorWrapper wrapper, bool isFast, bool isSwap)
+    private static void DoReloadCrossfade(FirearmOperation operation, UnityAnimatorWrapper wrapper, bool isFast, bool isSwap)
     {
-        if (wrapper.TryGetReloadOutHash(out var reloadOutHash, isFast, operation.Weapon_0))
+        if (wrapper.TryGetReloadOutHash(out var reloadOutHash, isFast, operation.Weapon))
         {
             // GClass2016.Start calls FirearmsAnimator.Reload(bool b), so we need to skip the reload animation and do our own crossfade.
             // But if it's a swap reload, no need to skip the reload animation, it's not called by the insert mag operation.
@@ -67,25 +68,25 @@ public static class AnimationUtil
                 SkipReloadAnimation(isFast);
             }
 
-            wrapper.Animator_0.CrossFade(
+            wrapper._animator.CrossFade(
                 reloadOutHash,
                 isSwap ? 0.15f : 0.10f, // Anything more than 0.10f looks like a magazine swap
                 FirearmsAnimator.HANDS_LAYER_INDEX,
                 0.50f // Skip mag out from weapon animation
             );
         }
-        else if (isSwap && operation.FirearmsAnimator_0.GetBoltCatch())
+        else if (isSwap && operation.FirearmsAnimator.GetBoltCatch())
         {
             // Special case: For weapons such as the SKS with an empty mag and no bullet in the chamber,
             // don't do crossfade and instead play the reload animation.
-            operation.FirearmsAnimator_0.PullOutMagInInventoryMode();
-            operation.FirearmsAnimator_0.ResetInsertMagInInventoryMode();
+            operation.FirearmsAnimator.PullOutMagInInventoryMode();
+            operation.FirearmsAnimator.ResetInsertMagInInventoryMode();
         }
     }
 
-    private static bool TryGetReloadOutHash(this AnimatorWrapper animator, out int reloadOutHash, bool isFast = false, Weapon weapon = null)
+    private static bool TryGetReloadOutHash(this UnityAnimatorWrapper unityAnimator, out int reloadOutHash, bool isFast = false, Weapon weapon = null)
     {
-        var currentStateHash = animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
+        var currentStateHash = unityAnimator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
         if (currentStateHash == _magCheckHash)
         {
             reloadOutHash = isFast ? _magReloadOutFastHash : _magReloadOutHash;
@@ -107,8 +108,8 @@ public static class AnimationUtil
             return false;
         }
 
-        LoggerUtil.Error(
-            $"Unsupported mag check hash: {GClass758.GetAnimStateByNameHash(currentStateHash)} ({currentStateHash}) for weapon: {weapon?.ToFullString()}"
+        L.Error(
+            $"Unsupported mag check hash: {AnimationControllerStatesTable.GetAnimStateByNameHash(currentStateHash)} ({currentStateHash}) for weapon: {weapon?.ToFullString()}"
         );
         reloadOutHash = -1;
         return false;

@@ -12,14 +12,11 @@ namespace MagCheckInterrupt.Patches;
 /// </summary>
 public class AmmoDetailsPatch : ModulePatch
 {
-    private static readonly AccessTools.FieldRef<EftBattleUIScreen, AmmoCountPanel> _ammoCountPanelField =
-        AccessTools.FieldRefAccess<EftBattleUIScreen, AmmoCountPanel>("_ammoCountPanel");
-
     private static AmmoDetails _lastAmmoDetail;
 
     protected override MethodBase GetTargetMethod()
     {
-        return AccessTools.Method(typeof(GamePlayerOwner), nameof(GamePlayerOwner.method_8));
+        return AccessTools.Method(typeof(GamePlayerOwner), nameof(GamePlayerOwner.PlayerOnOnShowAmmoDetails));
     }
 
     [PatchPrefix]
@@ -49,8 +46,7 @@ public class AmmoDetailsPatch : ModulePatch
 
     public static void HideAmmoCount()
     {
-        var ammoCountPanel = _ammoCountPanelField(Singleton<CommonUI>.Instance.EftBattleUIScreen);
-        ammoCountPanel.Hide();
+        Singleton<CommonUI>.Instance.EftBattleUIScreen._ammoCountPanel.Hide();
     }
 
     private readonly struct AmmoDetails(int ammoCount, int maxAmmoCount, int mastering, string details, bool foldingMechanimWeapon)

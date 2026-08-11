@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using EFT.InventoryLogic.Operations;
 using HarmonyLib;
 using MagCheckInterrupt.Components;
 using MagCheckInterrupt.Utils;
@@ -6,13 +7,18 @@ using SPT.Reflection.Patching;
 
 namespace MagCheckInterrupt.External;
 
-public class UIFixes
+public static class UIFixes
 {
     public static void Init()
     {
-        LoggerUtil.Info("Initializing UI Fixes compatibility");
+        L.Info("Initializing UI Fixes compatibility");
 
         new CanExecuteSwapPatch().Enable();
+    }
+
+    public static void Disable()
+    {
+        new CanExecuteSwapPatch().Disable();
     }
 }
 
@@ -33,7 +39,7 @@ public class CanExecuteSwapPatch : ModulePatch
     {
         if (__result) return;
         if (__instance.CurrentOperation is not MagCheckReloadOperation) return;
-        if (operation is not (SwapOperationClass or RemoveOperation or AttachOperation)) return;
+        if (operation is not (SwapOperation or AddSuboperation or RemoveSuboperation)) return;
 
         __result = true;
     }

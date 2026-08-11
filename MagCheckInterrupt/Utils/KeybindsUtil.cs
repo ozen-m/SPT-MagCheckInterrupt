@@ -5,14 +5,14 @@ namespace MagCheckInterrupt.Utils;
 
 public static class KeybindsUtil
 {
-    private static KeyBindingClass _reloadKeybind;
-    private static KeyBindingClass _checkKeybind;
+    private static InputKeyCombination _reloadKeybind;
+    private static InputKeyCombination _checkKeybind;
 
-    public static void UpdateKeys(InputBindingsDataClass keys)
+    public static void UpdateKeys(InputPreset keys)
     {
-        foreach (var key in keys.Gclass2408_0)
+        foreach (var key in keys._workingKeyCombinations)
         {
-            if (key is not KeyBindingClass keybind) continue;
+            if (key is not InputKeyCombination keybind) continue;
 
             switch (keybind.GameKey)
             {
@@ -28,9 +28,9 @@ public static class KeybindsUtil
 
     public static bool AreCheckAndReloadKeysConflicting()
     {
-        return _reloadKeybind.KeyCombinationState_0.GetKeysStatus(out var reloadStatus)
+        return _reloadKeybind._state.GetKeysStatus(out var reloadStatus)
                && (reloadStatus == EKeyPress.Down || reloadStatus == EKeyPress.Hold)
-               && _checkKeybind.KeyCombinationState_0.GetKeysStatus(out var checkStatus)
+               && _checkKeybind._state.GetKeysStatus(out var checkStatus)
                && (checkStatus == EKeyPress.Down || checkStatus == EKeyPress.Hold);
     }
 

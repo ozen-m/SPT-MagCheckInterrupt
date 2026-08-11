@@ -21,7 +21,7 @@ public class ReloadFastAnimationPatch : ModulePatch
     {
         if (!_toSkip) return true;
 
-        LoggerUtil.Debug("ReloadAnimationPatch::Prefix Skipped reload animation");
+        L.Debug("ReloadAnimationPatch::Prefix Skipped reload animation");
         _toSkip = false;
         return false;
     }

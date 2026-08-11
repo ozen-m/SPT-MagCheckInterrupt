@@ -29,6 +29,12 @@ public class AmmoDetailsPatch : ModulePatch
         bool foldingMechanimWeapon
     )
     {
+        // Show for stationary weapons
+        if (__instance.Player.MovementContext._stationaryWeapon != null)
+        {
+            return true;
+        }
+
         _lastAmmoDetail = new AmmoDetails(ammoCount, maxAmmoCount, mastering, details, foldingMechanimWeapon);
         return false;
     }

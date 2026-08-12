@@ -28,7 +28,7 @@ public class RunUtilityOpPatch : ModulePatch
             // Show ammo details since we skip it through `AmmoDetailsPatch`
             if (__instance.Player.FirstPersonPointOfView)
             {
-                AmmoDetailsPatch.ShowLastAmmoDetail();
+                AmmoDetailsPatch.ShowLastAmmoDetails();
             }
 
             return true;

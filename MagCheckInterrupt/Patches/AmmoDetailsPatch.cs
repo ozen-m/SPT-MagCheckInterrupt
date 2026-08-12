@@ -12,7 +12,7 @@ namespace MagCheckInterrupt.Patches;
 /// </summary>
 public class AmmoDetailsPatch : ModulePatch
 {
-    private static AmmoDetails _lastAmmoDetail;
+    private static AmmoDetails _lastAmmoDetails;
 
     protected override MethodBase GetTargetMethod()
     {
@@ -35,18 +35,18 @@ public class AmmoDetailsPatch : ModulePatch
             return true;
         }
 
-        _lastAmmoDetail = new AmmoDetails(ammoCount, maxAmmoCount, mastering, details, foldingMechanimWeapon);
+        _lastAmmoDetails = new AmmoDetails(ammoCount, maxAmmoCount, mastering, details, foldingMechanimWeapon);
         return false;
     }
 
-    public static void ShowLastAmmoDetail()
+    public static void ShowLastAmmoDetails()
     {
         Singleton<CommonUI>.Instance.EftBattleUIScreen.ShowAmmoDetails(
-            _lastAmmoDetail.AmmoCount,
-            _lastAmmoDetail.MaxAmmoCount,
-            _lastAmmoDetail.Mastering,
-            _lastAmmoDetail.Details,
-            _lastAmmoDetail.FoldingMechanimWeapon
+            _lastAmmoDetails.AmmoCount,
+            _lastAmmoDetails.MaxAmmoCount,
+            _lastAmmoDetails.Mastering,
+            _lastAmmoDetails.Details,
+            _lastAmmoDetails.FoldingMechanimWeapon
         );
     }
 

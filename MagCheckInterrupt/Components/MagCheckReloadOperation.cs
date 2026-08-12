@@ -9,20 +9,19 @@ namespace MagCheckInterrupt.Components;
 
 public class MagCheckReloadOperation(FirearmController controller) : UtilityOperation(controller)
 {
-#if DEBUG
-    private static PlayerStateDebug _playerStateDebug;
-#endif
-
     private bool _ammoDetailsShown;
     private bool _reloadCalled;
     private AddSuboperation _swapAddSuboperation;
 
-    // Slow down animation fields
+    #region Slow Down Animation Fields
     private float _currentSpeed = 1f;
     private float _targetSpeed = 1f;
     private SpeedState _animSpeedState = SpeedState.Normal;
+    #endregion
 
 #if DEBUG
+    private static PlayerStateDebug _playerStateDebug;
+
     public new void Start(EUtilityType utilityType)
     {
         base.Start(utilityType);
@@ -59,22 +58,13 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
         switch (_animSpeedState)
         {
-            case SpeedState.Normal:
-                if (normalizedTime > ConfigUtil.SlowAnimationStart.Value)
-                {
-                    _targetSpeed = ConfigUtil.SlowPercentage.Value;
-                    _animSpeedState = SpeedState.Slowed;
-                }
+            case SpeedState.Normal when normalizedTime > ConfigUtil.SlowAnimationStart.Value:
+                _targetSpeed = ConfigUtil.SlowPercentage.Value;
+                _animSpeedState = SpeedState.Slowed;
                 break;
-            case SpeedState.Slowed:
-                if (normalizedTime >= ConfigUtil.SlowAnimationEnd.Value)
-                {
-                    _targetSpeed = 1f;
-                    _animSpeedState = SpeedState.Restored;
-                }
-                break;
-            case SpeedState.Restored:
-            default:
+            case SpeedState.Slowed when normalizedTime >= ConfigUtil.SlowAnimationEnd.Value:
+                _targetSpeed = 1f;
+                _animSpeedState = SpeedState.Restored;
                 break;
         }
 
@@ -85,12 +75,12 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override void Reset()
     {
-        _ammoDetailsShown = false;
         _reloadCalled = false;
         _swapAddSuboperation = null;
-        _animSpeedState = SpeedState.Normal;
+        _ammoDetailsState = AmmoDetailsState.NotShown;
         _currentSpeed = 1f;
         _targetSpeed = 1f;
+        _animSpeedState = SpeedState.Normal;
         _reloadFixed = false;
         _inInventory = false;
         base.Reset();
@@ -213,7 +203,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
             return;
         }
 
-        // Remove magazine operation
+        // PullOutMagOperation operation
         if (oneItemOperation.From1 is not null
             && oneItemOperation.From1.IsChildOf(Weapon)
             && oneItemOperation is AddSuboperation removeOp)
@@ -266,7 +256,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
         _reloadCalled = true;
     }
 
-    private enum SpeedState : byte
+    private enum SpeedState
     {
         Normal,
         Slowed,

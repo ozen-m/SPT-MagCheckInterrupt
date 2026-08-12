@@ -16,7 +16,7 @@ public class FloatingPanelController : MonoBehaviour
     private AmmoCountPanel _panel;
     private Transform _panelTransform;
     private Transform _magazineTransform;
-    private Camera _camera;
+    private Transform _cameraTransform;
     private Action<Task> _onFinish;
 
     public static FloatingPanelController Instance
@@ -58,7 +58,7 @@ public class FloatingPanelController : MonoBehaviour
         var controller = controllerObject.AddComponent<FloatingPanelController>();
         controller._panelTransform = panelRect;
         controller._panel = panel;
-        controller._camera = CameraManager.Instance._camera;
+        controller._cameraTransform = CameraManager.Instance._camera.transform;
         controller._onFinish = controller.AnimationFinished; // Cache the action
 
         return controller;
@@ -72,7 +72,7 @@ public class FloatingPanelController : MonoBehaviour
             + (_magazineTransform.right * ConfigUtil.OffsetPosX.Value)
             + (_magazineTransform.up * ConfigUtil.OffsetPosY.Value)
             + (_magazineTransform.forward * ConfigUtil.OffsetPosZ.Value),
-            Quaternion.LookRotation(_magazineTransform.position - _camera.transform.position)
+            Quaternion.LookRotation(_magazineTransform.position - _cameraTransform.position, _cameraTransform.up)
         );
     }
 

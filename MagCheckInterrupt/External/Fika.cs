@@ -75,18 +75,17 @@ public static class Fika
         switch (eventArgs.Manager)
         {
             case FikaClient client:
-                ConfigUtil.SetReadOnly(true);
+                ConfigUtil.SetBrowsable(true);
                 ConfigUtil.DisplayIsUsingFikaHostConfig(true);
-                _cachedConfigValues = ConfigUtil.GetConfigValues();
                 client.RegisterPacket(new Action<ConfigPacket>(OnReceiveConfigPacket));
                 break;
             case FikaServer:
-                _cachedConfigValues = ConfigUtil.GetConfigValues();
                 ConfigUtil.RegisterSettingsChanged(OnHostSettingsChanged);
                 break;
         }
 
         eventArgs.Manager.RegisterPacket(new Action<ReloadCalledPacket>(OnReceiveReloadCalledPacket));
+        _cachedConfigValues = ConfigUtil.GetConfigValues();
     }
 
     private static void OnPeerConnected(PeerConnectedEvent eventArgs)
@@ -140,9 +139,18 @@ public static class Fika
     {
         if (eventArgs.IsServer) return;
 
+        RestoreConfig();
+    }
+
+    public static void RestoreConfig()
+    {
+        if (!_configReceivedFromHost) return;
+
         ConfigUtil.SetConfigValues(_cachedConfigValues);
         ConfigUtil.DisplayIsUsingFikaHostConfig(false);
-        ConfigUtil.SetReadOnly(false);
+        ConfigUtil.SetBrowsable(false);
+        _configReceivedFromHost = false;
+        _cachedConfigValues = null;
     }
     #endregion
 }

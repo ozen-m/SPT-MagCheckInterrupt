@@ -22,7 +22,7 @@ public static class ConfigUtil
     public static ConfigEntry<float> OffsetPosZ { get; private set; }
     public static ConfigEntry<float> Scale { get; private set; }
 
-    private static readonly List<ConfigEntryBase> _allConfigs = [];
+    private static readonly List<ConfigEntryBase> _syncedConfigs = [];
     private static ConfigFile _configFile;
     private static ConfigEntry<bool> _fikaHostConfig;
     private static GUIStyle _centeredStyle;
@@ -193,13 +193,13 @@ public static class ConfigUtil
             )
         );
 
-        _allConfigs.Add(ReloadWindowStart);
-        _allConfigs.Add(ReloadWindowEnd);
-        _allConfigs.Add(SlowAnimation);
-        _allConfigs.Add(SlowAnimationStart);
-        _allConfigs.Add(SlowAnimationEnd);
-        _allConfigs.Add(SlowPercentage);
-        _allConfigs.Add(SlowSmoothing);
+        _syncedConfigs.Add(ReloadWindowStart);
+        _syncedConfigs.Add(ReloadWindowEnd);
+        _syncedConfigs.Add(SlowAnimation);
+        _syncedConfigs.Add(SlowAnimationStart);
+        _syncedConfigs.Add(SlowAnimationEnd);
+        _syncedConfigs.Add(SlowPercentage);
+        _syncedConfigs.Add(SlowSmoothing);
     }
 
     public static void RegisterSettingsChanged(EventHandler<SettingChangedEventArgs> eventArgs)
@@ -207,15 +207,15 @@ public static class ConfigUtil
         _configFile.SettingChanged += eventArgs;
     }
 
-    public static void SetReadOnly(bool readOnly)
+    public static void SetBrowsable(bool isBrowsable)
     {
-        foreach (var config in _allConfigs)
+        foreach (var config in _syncedConfigs)
         {
             foreach (var tag in config.Description.Tags)
             {
                 if (tag is not ConfigurationManagerAttributes attr) continue;
 
-                attr.ReadOnly = readOnly;
+                attr.Browsable = isBrowsable;
                 break;
             }
         }
@@ -234,10 +234,10 @@ public static class ConfigUtil
 
     public static bool SetConfigValues(string[] values)
     {
-        if (values.Length != _allConfigs.Count)
+        if (values.Length != _syncedConfigs.Count)
         {
             L.Error(
-                $"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_allConfigs.Count}"
+                $"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_syncedConfigs.Count}"
             );
             NotificationManager.DisplayWarningNotification(
                 "MagCheckInterrupt: Unable to set config values. Different mod version with the host?",
@@ -246,9 +246,9 @@ public static class ConfigUtil
             return false;
         }
 
-        for (var i = 0; i < _allConfigs.Count; i++)
+        for (var i = 0; i < _syncedConfigs.Count; i++)
         {
-            var config = _allConfigs[i];
+            var config = _syncedConfigs[i];
             config.SetSerializedValue(values[i]);
         }
 
@@ -257,10 +257,10 @@ public static class ConfigUtil
 
     public static string[] GetConfigValues(string[] preAllocated = null)
     {
-        var configValues = preAllocated ?? new string[_allConfigs.Count];
-        for (var i = 0; i < _allConfigs.Count; i++)
+        var configValues = preAllocated ?? new string[_syncedConfigs.Count];
+        for (var i = 0; i < _syncedConfigs.Count; i++)
         {
-            var config = _allConfigs[i];
+            var config = _syncedConfigs[i];
             configValues[i] = config.GetSerializedValue();
         }
 

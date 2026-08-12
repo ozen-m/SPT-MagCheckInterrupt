@@ -44,6 +44,11 @@ public class MagCheckInterrupt : BaseUnityPlugin
 #endif
     }
 
+    protected void OnApplicationQuit()
+    {
+        External.Fika.RestoreConfig();
+    }
+
 #if DEBUG
     protected void OnDestroy()
     {

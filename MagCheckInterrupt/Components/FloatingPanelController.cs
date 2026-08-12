@@ -34,7 +34,7 @@ public class FloatingPanelController : MonoBehaviour
 
     public static FloatingPanelController Create()
     {
-        var localPlayer = GamePlayerOwner.MyPlayer.gameObject; // TODO: Make sure does not run on the headless
+        var localPlayer = GamePlayerOwner.MyPlayer.gameObject;
         var controllerObject = new GameObject(nameof(FloatingPanelController));
         controllerObject.transform.SetParent(localPlayer.transform);
 

@@ -2,6 +2,7 @@
 using BepInEx.Bootstrap;
 using EFT.InputSystem;
 using HarmonyLib;
+using MagCheckInterrupt.Components;
 using MagCheckInterrupt.External;
 using MagCheckInterrupt.Utils;
 using SPT.Reflection.Patching;
@@ -46,6 +47,12 @@ public class MagCheckInterrupt : BaseUnityPlugin
 #if DEBUG
     protected void OnDestroy()
     {
+        var floatingAmmoController = FloatingPanelController.Instance;
+        if (floatingAmmoController != null)
+        {
+            Destroy(floatingAmmoController.gameObject);
+        }
+
         if (Chainloader.PluginInfos.ContainsKey("com.tyfon.uifixes"))
         {
             UIFixes.Disable();

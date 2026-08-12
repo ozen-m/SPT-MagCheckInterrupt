@@ -16,6 +16,11 @@ public static class ConfigUtil
     public static ConfigEntry<float> SlowAnimationEnd { get; private set; }
     public static ConfigEntry<float> SlowPercentage { get; private set; }
     public static ConfigEntry<float> SlowSmoothing { get; private set; }
+    public static ConfigEntry<bool> FloatingAmmoDetails { get; private set; }
+    public static ConfigEntry<float> OffsetPosX { get; private set; }
+    public static ConfigEntry<float> OffsetPosY { get; private set; }
+    public static ConfigEntry<float> OffsetPosZ { get; private set; }
+    public static ConfigEntry<float> Scale { get; private set; }
 
     private static readonly List<ConfigEntryBase> _allConfigs = [];
     private static ConfigFile _configFile;
@@ -68,7 +73,7 @@ public static class ConfigUtil
         ReloadWindowStart = _configFile.Bind(
             "General",
             "Reload Window Start",
-            0.1f,
+            0.23f,
             new ConfigDescription(
                 "How early you can reload during the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
@@ -134,6 +139,57 @@ public static class ConfigUtil
                 "Max delta for the smoothing of the slow animation. A higher value slows/restores the animation faster",
                 new AcceptableValueRange<float>(0.01f, 10f),
                 new ConfigurationManagerAttributes { Order = 11, IsAdvanced = true }
+            )
+        );
+
+        FloatingAmmoDetails = _configFile.Bind(
+            "Ammo Details",
+            "Follows Magazine",
+            true,
+            new ConfigDescription(
+                "If enabled, the ammo details UI follows the magazine",
+                null,
+                new ConfigurationManagerAttributes { Order = 5 }
+            )
+        );
+        OffsetPosX = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset X",
+            -0.02f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }
+            )
+        );
+        OffsetPosY = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset Y",
+            0.075f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 3, IsAdvanced = true }
+            )
+        );
+        OffsetPosZ = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset Z",
+            -0.01f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 2, IsAdvanced = true }
+            )
+        );
+        Scale = _configFile.Bind(
+            "Ammo Details",
+            "Scale",
+            1f,
+            new ConfigDescription(
+                string.Empty,
+                new AcceptableValueRange<float>(0.0001f, 2f),
+                new ConfigurationManagerAttributes { Order = 1, IsAdvanced = true }
             )
         );
 

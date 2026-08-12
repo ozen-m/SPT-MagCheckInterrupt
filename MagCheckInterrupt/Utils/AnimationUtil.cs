@@ -1,4 +1,5 @@
 ﻿using EFT.InventoryLogic;
+using MagCheckInterrupt.Components;
 using MagCheckInterrupt.Patches;
 using UnityEngine;
 
@@ -22,6 +23,30 @@ public static class AnimationUtil
     private static readonly int _chamberCatchCheckHash = Animator.StringToHash("CHECK CHAMBER CATCHED");
     private static readonly int _chamberCatchReloadStartHash = Animator.StringToHash("RELOAD CATCH START");
 
+    public static void ShowAmmoDetails(FirearmController controller)
+    {
+        if (ConfigUtil.FloatingAmmoDetails.Value)
+        {
+            FloatingPanelController.Instance.ShowAmmoDetails(controller);
+        }
+        else
+        {
+            AmmoDetailsPatch.ShowLastAmmoDetails();
+        }
+    }
+
+    public static void HideAmmoDetails()
+    {
+        if (ConfigUtil.FloatingAmmoDetails.Value)
+        {
+            FloatingPanelController.Instance.Hide();
+        }
+        else
+        {
+            AmmoDetailsPatch.HideAmmoCount();
+        }
+    }
+    
     public static float GetNormalizedTime(this ObjectInHandsAnimator objectInHandsAnimator, int layerIndex)
     {
         return objectInHandsAnimator.Animator.GetCurrentAnimatorStateInfo(layerIndex).normalizedTime;
@@ -54,7 +79,7 @@ public static class AnimationUtil
             External.Fika.SendReloadCalledPacket();
         }
 
-        AmmoDetailsPatch.HideAmmoCount();
+        HideAmmoDetails();
     }
 
     private static void DoReloadCrossfade(FirearmOperation operation, UnityAnimatorWrapper wrapper, bool isFast, bool isSwap)

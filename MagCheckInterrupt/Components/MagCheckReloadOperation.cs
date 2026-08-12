@@ -9,9 +9,9 @@ namespace MagCheckInterrupt.Components;
 
 public class MagCheckReloadOperation(FirearmController controller) : UtilityOperation(controller)
 {
-    private bool _ammoDetailsShown;
     private bool _reloadCalled;
     private AddSuboperation _swapAddSuboperation;
+    private AmmoDetailsState _ammoDetailsState = AmmoDetailsState.NotShown;
 
     #region Slow Down Animation Fields
     private float _currentSpeed = 1f;
@@ -43,15 +43,21 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
         if (State != EOperationState.Ready) return;
 
         var normalizedTime = FirearmsAnimator.GetNormalizedTime(FirearmsAnimator.HANDS_LAYER_INDEX);
-        if (!_ammoDetailsShown && normalizedTime > ConfigUtil.ReloadWindowStart.Value)
-        {
-            // Show ammo details at the start of the reload window
-            if (Player.FirstPersonPointOfView)
-            {
-                AmmoDetailsPatch.ShowLastAmmoDetail();
-            }
 
-            _ammoDetailsShown = true;
+        if (Player.FirstPersonPointOfView)
+        {
+            switch (_ammoDetailsState)
+            {
+                case AmmoDetailsState.NotShown when normalizedTime >= ConfigUtil.ReloadWindowStart.Value:
+                    // Show ammo details at the start of the reload window
+                    AnimationUtil.ShowAmmoDetails(Controller);
+                    _ammoDetailsState = AmmoDetailsState.Shown;
+                    break;
+                case AmmoDetailsState.Shown when normalizedTime >= ConfigUtil.ReloadWindowEnd.Value:
+                    AnimationUtil.HideAmmoDetails();
+                    _ammoDetailsState = AmmoDetailsState.Hidden;
+                    break;
+            }
         }
 
         if (!ConfigUtil.SlowAnimation.Value) return;
@@ -240,10 +246,13 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
     public override void OnIdleStartEvent()
     {
         L.Debug("MagCheckReloadOperation::OnIdleStartEvent");
-
         base.OnIdleStartEvent();
 
-        if (!Player.FirstPersonPointOfView || ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Release) return;
+        if (!Player.FirstPersonPointOfView) return;
+
+        AnimationUtil.HideAmmoDetails();
+
+        if (ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Release) return;
 
         if (KeybindsUtil.AreCheckAndReloadKeysConflicting())
         {
@@ -261,5 +270,12 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
         Normal,
         Slowed,
         Restored,
+    }
+
+    private enum AmmoDetailsState
+    {
+        NotShown,
+        Shown,
+        Hidden,
     }
 }

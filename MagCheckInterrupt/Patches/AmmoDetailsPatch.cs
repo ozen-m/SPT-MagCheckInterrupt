@@ -50,12 +50,17 @@ public class AmmoDetailsPatch : ModulePatch
         );
     }
 
+    public static AmmoDetails GetLastAmmoDetails()
+    {
+        return _lastAmmoDetails;
+    }
+
     public static void HideAmmoCount()
     {
         Singleton<CommonUI>.Instance.EftBattleUIScreen._ammoCountPanel.Hide();
     }
 
-    private readonly struct AmmoDetails(int ammoCount, int maxAmmoCount, int mastering, string details, bool foldingMechanimWeapon)
+    public readonly struct AmmoDetails(int ammoCount, int maxAmmoCount, int mastering, string details, bool foldingMechanimWeapon)
     {
         public readonly int AmmoCount = ammoCount;
         public readonly int MaxAmmoCount = maxAmmoCount;

@@ -8,6 +8,7 @@
     <AssemblyName>$(Authors).$(RootNamespace)</AssemblyName>
     <RepositoryUrl>https://github.com/ozen-m/SPT-MagCheckInterrupt</RepositoryUrl>
     <DebugType>portable</DebugType>
+    <PathMap Condition="'$(Configuration)' == 'Release'">$(MSBuildProjectDirectory)=/src/</PathMap>
   </PropertyGroup>
 
   <ItemGroup>
@@ -99,7 +100,7 @@
   <Target Name="SetOutput" AfterTargets="Build">
     <PropertyGroup>
       <DestDir>BepInEx\plugins\$(Authors).$(SolutionName)</DestDir>
-      <DestDir Condition="'$(Configuration)' == 'Debug'">BepInEx\scripts\</DestDir>
+<!--      <DestDir Condition="'$(Configuration)' == 'Debug'">BepInEx\scripts\</DestDir>-->
     </PropertyGroup>
     <ItemGroup>
       <OutputDLL Include="$(TargetPath)" />

@@ -40,15 +40,15 @@ public class PlayerStateDebug : MonoBehaviour
     private static void GetPlayerStateSnapshot(StringBuilder sb, Player player)
     {
         sb.Clear();
-        AnimationDebug.smethod_0(sb, player);
+        PlayerDebugSnapshotCreator.AppendGeneralInfo(sb, player);
         // var firearmController = player.HandsController as FirearmController;
         // if (firearmController != null)
         // {
-        //     AnimationDebug.smethod_1(sb, player.ProfileId, firearmController);
+        //     PlayerDebugSnapshotCreator.AppendWeaponLogicalState(sb, player.ProfileId, firearmController);
         // }
-        AnimationDebug.smethod_3(sb, player.HandsController);
-        AnimationDebug.smethod_4(sb, "Hands Animator", player.HandsAnimator.Animator);
-        // AnimationDebug.smethod_2(sb, player.MovementContext);
-        // AnimationDebug.smethod_4(sb, "Body Animator", player.BodyAnimatorCommon);
+        PlayerDebugSnapshotCreator.AppendAnimationEventsHistory(sb, player.HandsController);
+        PlayerDebugSnapshotCreator.AppendAnimatorState(sb, "Hands Animator", player.HandsAnimator.Animator);
+        // PlayerDebugSnapshotCreator.AppendMovementContextLogicalState(sb, player.MovementContext);
+        // PlayerDebugSnapshotCreator.AppendAnimatorState(sb, "Body Animator", player.BodyAnimatorCommon);
     }
 }

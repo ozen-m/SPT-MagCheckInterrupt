@@ -16,44 +16,18 @@ public static class ConfigUtil
     public static ConfigEntry<float> SlowAnimationEnd { get; private set; }
     public static ConfigEntry<float> SlowPercentage { get; private set; }
     public static ConfigEntry<float> SlowSmoothing { get; private set; }
+    public static ConfigEntry<bool> FloatingAmmoDetails { get; private set; }
+    public static ConfigEntry<float> OffsetPosX { get; private set; }
+    public static ConfigEntry<float> OffsetPosY { get; private set; }
+    public static ConfigEntry<float> OffsetPosZ { get; private set; }
+    public static ConfigEntry<float> Scale { get; private set; }
 
-    private static readonly List<ConfigEntryBase> _allConfigs = [];
+    private static readonly List<ConfigEntryBase> _syncedConfigs = [];
     private static ConfigFile _configFile;
-    private static ConfigEntry<bool> _fikaHostConfig;
-    private static GUIStyle _centeredStyle;
 
     public static void Init(ConfigFile configFile)
     {
         _configFile = configFile;
-
-        _fikaHostConfig = _configFile.Bind(
-            string.Empty,
-            "FikaHostConfig",
-            false,
-            new ConfigDescription(
-                "This is displayed when a Fika Client is using the Host's config",
-                null,
-                new ConfigurationManagerAttributes
-                {
-                    Order = 33,
-                    Browsable = false,
-                    HideDefaultButton = true,
-                    HideSettingName = true,
-                    CustomDrawer = (_) =>
-                    {
-                        _centeredStyle ??= new GUIStyle(GUI.skin.label)
-                        {
-                            richText = true,
-                            wordWrap = true,
-                            alignment = TextAnchor.MiddleCenter,
-                            fontSize = 18,
-                        };
-
-                        GUILayout.Label("<color=#4DA6FF><b>Configuration is set by the Fika Host</b></color>", _centeredStyle);
-                    },
-                }
-            )
-        );
 
         ReloadMode = _configFile.Bind(
             "General",
@@ -65,10 +39,62 @@ public static class ConfigUtil
                 new ConfigurationManagerAttributes { Order = 41 }
             )
         );
+
+        FloatingAmmoDetails = _configFile.Bind(
+            "Ammo Details",
+            "Follows Magazine",
+            true,
+            new ConfigDescription(
+                "If enabled, the ammo details UI follows the magazine",
+                null,
+                new ConfigurationManagerAttributes { Order = 39 }
+            )
+        );
+        OffsetPosX = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset X",
+            -0.02f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 38, IsAdvanced = true }
+            )
+        );
+        OffsetPosY = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset Y",
+            0.075f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 37, IsAdvanced = true }
+            )
+        );
+        OffsetPosZ = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset Z",
+            -0.01f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 36, IsAdvanced = true }
+            )
+        );
+        Scale = _configFile.Bind(
+            "Ammo Details",
+            "Scale",
+            1f,
+            new ConfigDescription(
+                string.Empty,
+                new AcceptableValueRange<float>(0.0001f, 2f),
+                new ConfigurationManagerAttributes { Order = 35, IsAdvanced = true }
+            )
+        );
+
         ReloadWindowStart = _configFile.Bind(
-            "General",
-            "Reload Window Start",
-            0.1f,
+            "Reload Window",
+            "Start",
+            0.23f,
             new ConfigDescription(
                 "How early you can reload during the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
@@ -76,8 +102,8 @@ public static class ConfigUtil
             )
         );
         ReloadWindowEnd = _configFile.Bind(
-            "General",
-            "Reload Window End",
+            "Reload Window",
+            "End",
             0.6f,
             new ConfigDescription(
                 "How late you can reload during the magazine check animation, in normalized time",
@@ -137,62 +163,56 @@ public static class ConfigUtil
             )
         );
 
-        _allConfigs.Add(ReloadWindowStart);
-        _allConfigs.Add(ReloadWindowEnd);
-        _allConfigs.Add(SlowAnimation);
-        _allConfigs.Add(SlowAnimationStart);
-        _allConfigs.Add(SlowAnimationEnd);
-        _allConfigs.Add(SlowPercentage);
-        _allConfigs.Add(SlowSmoothing);
+        _syncedConfigs.Add(ReloadWindowStart);
+        _syncedConfigs.Add(ReloadWindowEnd);
+        _syncedConfigs.Add(SlowAnimation);
+        _syncedConfigs.Add(SlowAnimationStart);
+        _syncedConfigs.Add(SlowAnimationEnd);
+        _syncedConfigs.Add(SlowPercentage);
+        _syncedConfigs.Add(SlowSmoothing);
     }
 
-    public static void RegisterSettingsChanged(EventHandler<SettingChangedEventArgs> eventArgs)
+    public static Action SubscribeSettingsChanged(EventHandler<SettingChangedEventArgs> eventArgs)
     {
         _configFile.SettingChanged += eventArgs;
+        return () => _configFile.SettingChanged -= eventArgs;
     }
 
     public static void SetReadOnly(bool readOnly)
     {
-        foreach (var config in _allConfigs)
+        foreach (var config in _syncedConfigs)
         {
             foreach (var tag in config.Description.Tags)
             {
                 if (tag is not ConfigurationManagerAttributes attr) continue;
 
                 attr.ReadOnly = readOnly;
+                attr.CustomDrawer = !readOnly
+                    ? null
+                    : (_) => { GUILayout.Label("<color=grey>Set by the Fika Host</color>", GUILayout.ExpandWidth(true)); };
+
                 break;
             }
         }
     }
 
-    public static void DisplayIsUsingFikaHostConfig(bool usingFikaHost)
-    {
-        foreach (var tag in _fikaHostConfig.Description.Tags)
-        {
-            if (tag is not ConfigurationManagerAttributes attr) continue;
-
-            attr.Browsable = usingFikaHost;
-            return;
-        }
-    }
-
     public static bool SetConfigValues(string[] values)
     {
-        if (values.Length != _allConfigs.Count)
+        if (values.Length != _syncedConfigs.Count)
         {
-            LoggerUtil.Error(
-                $"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_allConfigs.Count}"
+            L.Error(
+                $"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_syncedConfigs.Count}"
             );
-            NotificationManagerClass.DisplayWarningNotification(
+            NotificationManager.DisplayWarningNotification(
                 "MagCheckInterrupt: Unable to set config values. Different mod version with the host?",
                 ENotificationDurationType.Long
             );
             return false;
         }
 
-        for (var i = 0; i < _allConfigs.Count; i++)
+        for (var i = 0; i < _syncedConfigs.Count; i++)
         {
-            var config = _allConfigs[i];
+            var config = _syncedConfigs[i];
             config.SetSerializedValue(values[i]);
         }
 
@@ -201,10 +221,10 @@ public static class ConfigUtil
 
     public static string[] GetConfigValues(string[] preAllocated = null)
     {
-        var configValues = preAllocated ?? new string[_allConfigs.Count];
-        for (var i = 0; i < _allConfigs.Count; i++)
+        var configValues = preAllocated ?? new string[_syncedConfigs.Count];
+        for (var i = 0; i < _syncedConfigs.Count; i++)
         {
-            var config = _allConfigs[i];
+            var config = _syncedConfigs[i];
             configValues[i] = config.GetSerializedValue();
         }
 

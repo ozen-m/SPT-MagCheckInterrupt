@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using EFT.InputSystem;
 using MagCheckInterrupt.Utils;
 using SPT.Reflection.Patching;
 
@@ -8,11 +9,11 @@ public class UpdateBindingsPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(InputBindingsDataClass).GetMethod(nameof(InputBindingsDataClass.UpdateBindings));
+        return typeof(InputPreset).GetMethod(nameof(InputPreset.UpdateBindings));
     }
 
     [PatchPostfix]
-    public static void Postfix(InputBindingsDataClass __instance)
+    public static void Postfix(InputPreset __instance)
     {
         KeybindsUtil.UpdateKeys(__instance);
     }

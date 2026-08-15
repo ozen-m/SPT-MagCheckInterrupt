@@ -1,8 +1,8 @@
 ﻿using System;
 using Comfort.Common;
+using Diz.LanguageExtensions;
 using EFT;
 using EFT.InventoryLogic;
-using HarmonyLib;
 using MagCheckInterrupt.Utils;
 
 namespace MagCheckInterrupt.Components;
@@ -14,7 +14,7 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
 {
     private Slot _weaponMagazineSlot;
     private Callback _finishCallback;
-    private AttachModResult _insertMagResult;
+    private InsertMagResult _insertMagResult;
 
     private bool _isMagazineWithBelt;
     private bool _magPulledOutFromWeapon;
@@ -26,13 +26,13 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
     private bool _ammoRemovedFromChamber;
 
     /// <summary>
-    /// Does both <see cref="RemoveModOperation"/> and <see cref="AttachModOperation"/>
+    /// Does both <see cref="PullOutMagOperation"/> and <see cref="InsertMagOperation"/>
     /// </summary>
     /// <param name="magazine">Removed magazine</param>
     /// <param name="from">Slot magazine was removed from</param>
-    public virtual void Start(MagazineItemClass magazine, Slot from, Callback finishCallback)
+    public virtual void Start(Magazine magazine, Slot from, Callback finishCallback)
     {
-        LoggerUtil.Debug("SwapReloadOperation::Start");
+        L.Debug("SwapReloadOperation::Start");
 
         _weaponMagazineSlot = from;
         _finishCallback = finishCallback;
@@ -40,47 +40,47 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
         base.Start();
         this.TransitionToReload(false, true);
 
-        FirearmsAnimator_0.SetFire(false);
-        FirearmsAnimator_0.SetIsExternalMag(true);
-        FirearmsAnimator_0.SetCanReload(true); // True to proceed with the next magazine
-        Player_0.MovementContext.SetBlindFire(0);
-        Player_0.BodyAnimatorCommon.SetFloat(PlayerAnimator.RELOAD_FLOAT_PARAM_HASH, 1f);
-        _blockTriggerField(FirearmController_0) = true;
+        FirearmsAnimator.SetFire(false);
+        FirearmsAnimator.SetIsExternalMag(true);
+        FirearmsAnimator.SetCanReload(true); // True to proceed with the next magazine
+        Player.MovementContext.SetBlindFire(0);
+        Player.BodyAnimatorCommon.SetFloat(PlayerAnimator.RELOAD_FLOAT_PARAM_HASH, 1f);
+        Controller.bool_1 = true; // Block trigger
 
-        if (Weapon_0.IsBeltMachineGun)
+        if (Weapon.IsBeltMachineGun)
         {
-            FirearmController_0.IsAiming = false;
+            Controller.IsAiming = false;
         }
 
-        if (!Weapon_0.MustBoltBeOpennedForExternalReload)
+        if (!Weapon.MustBoltBeOpennedForExternalReload)
         {
             _shellEjected = true;
             _ammoRemovedFromChamber = true;
-            if (Weapon_0.MalfState.State == Weapon.EMalfunctionState.Misfire)
+            if (Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire)
             {
-                FirearmsAnimator_0.SetLayerWeight(FirearmsAnimator_0.MALFUNCTION_LAYER_INDEX, 0);
+                FirearmsAnimator.SetLayerWeight(FirearmsAnimator.MALFUNCTION_LAYER_INDEX, 0);
             }
         }
-        else if (Weapon_0.MalfState.State == Weapon.EMalfunctionState.Misfire)
+        else if (Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire)
         {
-            FirearmsAnimator_0.SetAmmoInChamber(1f);
-            FirearmsAnimator_0.SetLayerWeight(FirearmsAnimator_0.MALFUNCTION_LAYER_INDEX, 0);
+            FirearmsAnimator.SetAmmoInChamber(1f);
+            FirearmsAnimator.SetLayerWeight(FirearmsAnimator.MALFUNCTION_LAYER_INDEX, 0);
         }
 
         // isReleased
-        if (Weapon_0.IsBoltCatch
-            && Weapon_0.ChamberAmmoCount == 1
-            && !Weapon_0.ManualBoltCatch
-            && !Weapon_0.MustBoltBeOpennedForExternalReload
-            && !Weapon_0.MustBoltBeOpennedForInternalReload)
+        if (Weapon.IsBoltCatch
+            && Weapon.ChamberAmmoCount == 1
+            && !Weapon.ManualBoltCatch
+            && !Weapon.MustBoltBeOpennedForExternalReload
+            && !Weapon.MustBoltBeOpennedForInternalReload)
         {
-            FirearmsAnimator_0.SetBoltCatch(false);
+            FirearmsAnimator.SetBoltCatch(false);
         }
     }
 
     public override void Reset()
     {
-        LoggerUtil.Debug("SwapReloadOperation::Reset");
+        L.Debug("SwapReloadOperation::Reset");
 
         _weaponMagazineSlot = null;
         _insertMagResult = null;
@@ -98,47 +98,47 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
 
     public override void OnMagPulledOutFromWeapon()
     {
-        LoggerUtil.Debug("SwapReloadOperation::OnMagPulledOutFromWeapon");
+        L.Debug("SwapReloadOperation::OnMagPulledOutFromWeapon");
 
         if (_magPulledOutFromWeapon) return;
 
         _magPulledOutFromWeapon = true;
-        FirearmsAnimator_0.SetAmmoOnMag(0);
-        FirearmsAnimator_0.SetMagInWeapon(false);
-        if (FirearmController_0.HasBipod)
+        FirearmsAnimator.SetAmmoOnMag(0);
+        FirearmsAnimator.SetMagInWeapon(false);
+        if (Controller.HasBipod)
         {
-            FirearmController_0.FirearmsAnimator.SetBipod(FirearmController_0.BipodState);
+            Controller.FirearmsAnimator.SetBipod(Controller.BipodState);
         }
     }
 
     public override void OnMagPuttedToRig()
     {
-        LoggerUtil.Debug("SwapReloadOperation::OnMagPuttedToRig");
+        L.Debug("SwapReloadOperation::OnMagPuttedToRig");
 
         if (_magPuttedToRig) return;
 
         _magPuttedToRig = true;
-        WeaponManagerClass.RemoveMod(_weaponMagazineSlot);
+        Firearms.RemoveMod(_weaponMagazineSlot);
 
         if (_isMagazineWithBelt)
         {
-            _weaponPrefabField(FirearmController_0).UpdateAnimatorHierarchy();
-            if (FirearmController_0.HasBipod)
+            Controller._weaponPrefab.UpdateAnimatorHierarchy();
+            if (Controller.HasBipod)
             {
-                FirearmController_0.FirearmsAnimator.SetBipod(FirearmController_0.BipodState);
+                Controller.FirearmsAnimator.SetBipod(Controller.BipodState);
             }
         }
 
         // Run insert magazine
-        var insertResult = AttachModResult.Run(Player_0.InventoryController, Weapon_0, Player_0.ProfileId);
+        var insertResult = InsertMagResult.Run(Player.InventoryController, Weapon, Player.ProfileId);
         if (insertResult.Failed)
         {
-            LoggerUtil.Error($"MagCheckReloadOperation::OnMagPuttedToRig Insert mag operation failed: {insertResult.Error}");
-            FirearmsAnimator_0.SetCanReload(false);
+            L.Error($"MagCheckReloadOperation::OnMagPuttedToRig Insert mag operation failed: {insertResult.Error}");
+            FirearmsAnimator.SetCanReload(false);
             _finishCallback.Invoke(insertResult);
 
             State = EOperationState.Finished;
-            FirearmController_0.InitiateOperation<IdlingOperation>().Start(null);
+            Controller.InitiateOperation<Idling>().Start();
             return;
         }
 
@@ -147,160 +147,160 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
 
     public override void OnShellEjectEvent()
     {
-        LoggerUtil.Debug("SwapReloadOperation::OnShellEjectEvent");
+        L.Debug("SwapReloadOperation::OnShellEjectEvent");
 
         if (_shellEjected) return;
 
         _shellEjected = true;
-        if (Weapon_0.MustBoltBeOpennedForExternalReload && Weapon_0.MalfState.State == Weapon.EMalfunctionState.Misfire)
+        if (Weapon.MustBoltBeOpennedForExternalReload && Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire)
         {
-            WeaponManagerClass.CreatePatronInShellPort(Weapon_0.MalfState.MalfunctionedAmmo, 0);
-            WeaponManagerClass.StartSpawnMisfiredCartridge(Player_0.Velocity * 0.66f);
+            Firearms.CreatePatronInShellPort(Weapon.MalfState.MalfunctionedAmmo, 0);
+            Firearms.StartSpawnMisfiredCartridge(Player.Velocity * 0.66f);
             return;
         }
 
-        foreach (var chamber in Weapon_0.Chambers)
+        foreach (var chamber in Weapon.Chambers)
         {
-            if (chamber.ContainedItem is not AmmoItemClass { IsUsed: false } ammoItemClass) continue;
+            if (chamber.ContainedItem is not Ammo { IsUsed: false } ammoItemClass) continue;
 
-            WeaponManagerClass.MoveAmmoFromChamberToShellPort(ammoItemClass.IsUsed, 0);
-            WeaponManagerClass.StartSpawnShell(Player_0.Velocity * 0.66f, 0);
+            Firearms.MoveAmmoFromChamberToShellPort(ammoItemClass.IsUsed, 0);
+            Firearms.StartSpawnShell(Player.Velocity * 0.66f, 0);
             return;
         }
 
-        LoggerUtil.Warning("SwapReloadOperation::OnShellEjectEvent No unused ammo found in chambers?");
+        L.Warning("SwapReloadOperation::OnShellEjectEvent No unused ammo found in chambers?");
     }
 
     public override void RemoveAmmoFromChamber()
     {
-        LoggerUtil.Debug("SwapReloadOperation::RemoveAmmoFromChamber");
+        L.Debug("SwapReloadOperation::RemoveAmmoFromChamber");
 
         if (_ammoRemovedFromChamber) return;
 
         _ammoRemovedFromChamber = true;
-        if (Weapon_0.MustBoltBeOpennedForExternalReload && Weapon_0.MalfState.State == Weapon.EMalfunctionState.Misfire)
+        if (Weapon.MustBoltBeOpennedForExternalReload && Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire)
         {
             method_2();
-            FirearmsAnimator_0.SetAmmoInChamber(Weapon_0.ChamberAmmoCount);
+            FirearmsAnimator.SetAmmoInChamber(Weapon.ChamberAmmoCount);
             return;
         }
 
-        foreach (var slot in Weapon_0.Chambers)
+        foreach (var slot in Weapon.Chambers)
         {
-            if (slot.ContainedItem is AmmoItemClass { IsUsed: false } ammoInChamber && slot.RemoveItem(false).Succeeded)
+            if (slot.ContainedItem is Ammo { IsUsed: false } ammoInChamber && slot.RemoveItem(false).Succeeded)
             {
                 // Below line is missing in GClass2050.RemoveAmmoFromChamber, but is in GClass2016.RemoveAmmoFromChamber
-                WeaponManagerClass.ThrowPatronAsLoot(ammoInChamber, Player_0, "SwapReloadOperation.RemoveAmmoFromChamber");
+                Firearms.ThrowPatronAsLoot(ammoInChamber, Player, "SwapReloadOperation.RemoveAmmoFromChamber");
                 break;
             }
         }
 
-        FirearmsAnimator_0.SetAmmoInChamber(Weapon_0.ChamberAmmoCount);
+        FirearmsAnimator.SetAmmoInChamber(Weapon.ChamberAmmoCount);
     }
 
     public override void OnMagAppeared()
     {
-        LoggerUtil.Debug("SwapReloadOperation::OnMagAppeared");
+        L.Debug("SwapReloadOperation::OnMagAppeared");
 
         if (_magAppeared) return;
 
         _magAppeared = true;
         InsertMagazine();
-        WeaponManagerClass.SetupMod(
+        Firearms.SetupMod(
             _insertMagResult.MagazineSlot.Slot,
-            Singleton<PoolManagerClass>.Instance.CreateItem(_insertMagResult.Magazine, true)
+            Singleton<ObjectsFactory>.Instance.CreateItem(_insertMagResult.Magazine, true)
         );
 
         if (_insertMagResult.Magazine.IsMagazineWithBelt)
         {
-            _weaponPrefabField(FirearmController_0).UpdateAnimatorHierarchy();
-            if (FirearmController_0.HasBipod)
+            Controller._weaponPrefab.UpdateAnimatorHierarchy();
+            if (Controller.HasBipod)
             {
-                FirearmController_0.FirearmsAnimator.SetBipod(FirearmController_0.BipodState);
+                Controller.FirearmsAnimator.SetBipod(Controller.BipodState);
             }
         }
     }
 
     public override void OnMagInsertedToWeapon()
     {
-        LoggerUtil.Debug("SwapReloadOperation::OnMagInsertedToWeapon");
+        L.Debug("SwapReloadOperation::OnMagInsertedToWeapon");
 
         if (_magInsertedToWeapon) return;
 
         _magInsertedToWeapon = true;
-        FirearmsAnimator_0.SetAmmoOnMag(_insertMagResult.MagazineAmmoCount + (_insertMagResult.HasNewAmmo ? 1 : 0));
-        FirearmsAnimator_0.SetMagInWeapon(true);
-        FirearmsAnimator_0.SetAmmoCompatible(_insertMagResult.AmmoCompatible);
+        FirearmsAnimator.SetAmmoOnMag(_insertMagResult.MagazineAmmoCount + (_insertMagResult.HasNewAmmo ? 1 : 0));
+        FirearmsAnimator.SetMagInWeapon(true);
+        FirearmsAnimator.SetAmmoCompatible(_insertMagResult.AmmoCompatible);
 
         if (!_insertMagResult.HasNewAmmo
-            && (Weapon_0.MalfState.State != Weapon.EMalfunctionState.Misfire
-                || !Weapon_0.MalfState.IsKnownMalfunction(Player_0.ProfileId)
+            && (Weapon.MalfState.State != Weapon.EMalfunctionState.Misfire
+                || !Weapon.MalfState.IsKnownMalfunction(Player.ProfileId)
                 || !_insertMagResult.AmmoCompatible
                 || _insertMagResult.Magazine.Count <= 0))
         {
             EndOperation();
         }
 
-        if (FirearmController_0.HasBipod)
+        if (Controller.HasBipod)
         {
-            FirearmController_0.FirearmsAnimator.SetBipod(FirearmController_0.BipodState);
+            Controller.FirearmsAnimator.SetBipod(Controller.BipodState);
         }
     }
 
     public override void OnOnOffBoltCatchEvent(bool isCaught)
     {
-        LoggerUtil.Debug("SwapReloadOperation::OnOnOffBoltCatchEvent");
-        FirearmsAnimator_0.SetBoltCatch(isCaught);
+        L.Debug("SwapReloadOperation::OnOnOffBoltCatchEvent");
+        FirearmsAnimator.SetBoltCatch(isCaught);
     }
 
     public override void OnAddAmmoInChamber()
     {
-        LoggerUtil.Debug("SwapReloadOperation::OnAddAmmoInChamber");
+        L.Debug("SwapReloadOperation::OnAddAmmoInChamber");
 
         if (_addedAmmoInChamber) return;
 
         _addedAmmoInChamber = true;
-        FirearmsAnimator_0.SetAmmoOnMag(_insertMagResult.Magazine.Count);
-        if (Weapon_0.MalfState.State == Weapon.EMalfunctionState.Misfire)
+        FirearmsAnimator.SetAmmoOnMag(_insertMagResult.Magazine.Count);
+        if (Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire)
         {
             method_2();
         }
         if (_insertMagResult.HasNewAmmo)
         {
-            WeaponManagerClass.SetRoundIntoWeapon(_insertMagResult.NewAmmo, 0);
+            Firearms.SetRoundIntoWeapon(_insertMagResult.NewAmmo, 0);
         }
-        FirearmsAnimator_0.SetAmmoInChamber(_insertMagResult.Weapon.ChamberAmmoCount);
+        FirearmsAnimator.SetAmmoInChamber(_insertMagResult.Weapon.ChamberAmmoCount);
         EndOperation();
     }
 
     public override void SetInventoryOpened(bool opened)
     {
-        LoggerUtil.Debug("SwapReloadOperation::SetInventoryOpened");
+        L.Debug("SwapReloadOperation::SetInventoryOpened");
 
-        FirearmController_0.InventoryOpened = opened;
-        FirearmsAnimator_0.SetInventory(opened);
+        Controller.InventoryOpened = opened;
+        FirearmsAnimator.SetInventory(opened);
     }
 
     public override void HideWeapon(Action onHidden, bool fastDrop, Item nextControllerItem = null)
     {
-        LoggerUtil.Debug("SwapReloadOperation::HideWeapon");
+        L.Debug("SwapReloadOperation::HideWeapon");
 
         State = EOperationState.Finished;
-        FirearmController_0.RecalculateErgonomic();
-        FirearmController_0.IsTriggerPressed = false;
-        FirearmController_0.IsAiming = false;
+        Controller.RecalculateErgonomic();
+        Controller.IsTriggerPressed = false;
+        Controller.IsAiming = false;
         State = EOperationState.Finished; // Idk why BSG set this twice
-        FirearmController_0.InitiateOperation<RemoveWeaponOperation>().Start(onHidden, fastDrop, nextControllerItem);
+        Controller.InitiateOperation<Remove>().Start(onHidden, fastDrop, nextControllerItem);
     }
 
-    public override bool CanChangeLightState(FirearmLightStateStruct[] lightsStates)
+    public override bool CanChangeLightState(LightsState[] lightsStates)
     {
         return false;
     }
 
     public override void FastForward()
     {
-        LoggerUtil.Debug("SwapReloadOperation::FastForward");
+        L.Debug("SwapReloadOperation::FastForward");
 
         RemoveAmmoFromChamber();
         OnShellEjectEvent();
@@ -317,49 +317,41 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
 
     private void InsertMagazine()
     {
-        LoggerUtil.Debug("SwapReloadOperation::InsertMagazine");
+        L.Debug("SwapReloadOperation::InsertMagazine");
 
-        FirearmsAnimator_0.SetMagTypeNew(_insertMagResult.Magazine.magAnimationIndex);
-        FirearmsAnimator_0.SetMagTypeCurrent(_insertMagResult.Magazine.magAnimationIndex);
+        FirearmsAnimator.SetMagTypeNew(_insertMagResult.Magazine.magAnimationIndex);
+        FirearmsAnimator.SetMagTypeCurrent(_insertMagResult.Magazine.magAnimationIndex);
 
         // isReleased
-        if (Weapon_0.IsBoltCatch
-            && Weapon_0.ChamberAmmoCount == 1
+        if (Weapon.IsBoltCatch
+            && Weapon.ChamberAmmoCount == 1
             && !_insertMagResult.HasNewAmmo
-            && !Weapon_0.ManualBoltCatch
-            && !Weapon_0.MustBoltBeOpennedForExternalReload
-            && !Weapon_0.MustBoltBeOpennedForInternalReload)
+            && !Weapon.ManualBoltCatch
+            && !Weapon.MustBoltBeOpennedForExternalReload
+            && !Weapon.MustBoltBeOpennedForInternalReload)
         {
-            FirearmsAnimator_0.SetBoltCatch(false);
+            FirearmsAnimator.SetBoltCatch(false);
         }
 
         // isMalfunction
-        if (Weapon_0.MalfState.State == Weapon.EMalfunctionState.Misfire
-            && Weapon_0.MalfState.IsKnownMalfunction(Player_0.ProfileId)
+        if (Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire
+            && Weapon.MalfState.IsKnownMalfunction(Player.ProfileId)
             && _insertMagResult.Magazine.Count > 0
             && _insertMagResult.AmmoCompatible)
         {
-            FirearmsAnimator_0.SetAmmoInChamber(0f);
-            FirearmsAnimator_0.SetLayerWeight(FirearmsAnimator_0.MALFUNCTION_LAYER_INDEX, 0);
+            FirearmsAnimator.SetAmmoInChamber(0f);
+            FirearmsAnimator.SetLayerWeight(FirearmsAnimator.MALFUNCTION_LAYER_INDEX, 0);
         }
     }
 
     private void EndOperation()
     {
-        LoggerUtil.Debug("SwapReloadOperation::EndOperation");
+        L.Debug("SwapReloadOperation::EndOperation");
 
         State = EOperationState.Finished;
-        FirearmController_0.RecalculateErgonomic();
-        FirearmController_0.InitiateOperation<IdlingOperation>().Start(null);
+        Controller.RecalculateErgonomic();
+        Controller.InitiateOperation<Idling>().Start(null);
         _finishCallback?.Succeed();
-        FirearmController_0.WeaponModified();
+        Controller.WeaponModified();
     }
-
-    #region REFLECTION
-    private static readonly AccessTools.FieldRef<FirearmController, bool> _blockTriggerField =
-        AccessTools.FieldRefAccess<FirearmController, bool>("bool_1");
-
-    private static readonly AccessTools.FieldRef<FirearmController, WeaponPrefab> _weaponPrefabField =
-        AccessTools.FieldRefAccess<FirearmController, WeaponPrefab>("weaponPrefab_0");
-    #endregion
 }

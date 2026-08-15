@@ -2,11 +2,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>preview</LangVersion>
-    <Version>1.0.2</Version>
-    <Authors>ozen</Authors>
-    <RepositoryUrl>https://github.com/ozen-m/SPT-MagCheckInterrupt</RepositoryUrl>
     <RootNamespace>MagCheckInterrupt.Net</RootNamespace>
-    <AssemblyName>$(Authors)-$(RootNamespace)</AssemblyName>
+    <Version>1.1.0</Version>
+    <Authors>ozen</Authors>
+    <AssemblyName>$(Authors).$(RootNamespace)</AssemblyName>
+    <RepositoryUrl>https://github.com/ozen-m/SPT-MagCheckInterrupt</RepositoryUrl>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,10 +19,10 @@
 
   <Target Name="SetOutput" AfterTargets="Build">
     <PropertyGroup>
-      <DestDir>BepInEx\plugins\</DestDir>
+      <DestDir>BepInEx\plugins\$(Authors).$(SolutionName)</DestDir>
     </PropertyGroup>
     <ItemGroup>
-      <ModRoot Include="$(TargetPath)" />
+      <OutputDLL Include="$(TargetPath)" />
     </ItemGroup>
   </Target>
 </Project>

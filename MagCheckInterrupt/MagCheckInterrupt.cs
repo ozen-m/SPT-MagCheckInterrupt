@@ -1,33 +1,71 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
-using BepInEx.Logging;
+using MagCheckInterrupt.External;
 using MagCheckInterrupt.Utils;
 using SPT.Reflection.Patching;
 
 namespace MagCheckInterrupt;
 
-[BepInPlugin("com.ozen.magcheckinterrupt", "MagCheckInterrupt", "1.0.2")]
+[BepInPlugin("com.ozen.magcheckinterrupt", "Magazine Check Interrupt", "1.1.0")]
 [BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
 public class MagCheckInterrupt : BaseUnityPlugin
 {
-    public static ManualLogSource LogSource { get; private set; }
+    private PatchManager _patchManager;
 
     protected void Awake()
     {
-        LogSource = Logger;
+        L.SetLogger(Logger);
 
         ConfigUtil.Init(Config);
 
-        var patchManager = new PatchManager(this, true);
-        patchManager.EnablePatches();
+        _patchManager = new PatchManager(this, true);
+        _patchManager.EnablePatches();
 
         if (Chainloader.PluginInfos.ContainsKey("com.fika.core"))
         {
             External.Fika.Init();
         }
-        if (Chainloader.PluginInfos.ContainsKey("Tyfon.UIFixes")) // TODO: Update GUID in 4.1.x
+        if (Chainloader.PluginInfos.ContainsKey("com.tyfon.uifixes"))
         {
-            External.UIFixes.Init();
+            UIFixes.Init();
         }
+
+#if DEBUG
+        // Hot reloading
+        var currentPreset = (InputPreset)AccessTools.Field(typeof(InputManager), "_currentPreset").GetValue(null);
+        if (currentPreset != null)
+        {
+            KeybindsUtil.UpdateKeys(currentPreset);
+        }
+#endif
     }
+
+    protected void OnApplicationQuit()
+    {
+        External.Fika.RestoreConfig();
+    }
+
+#if DEBUG
+    protected void OnDestroy()
+    {
+        var floatingAmmoController = FloatingPanelController.Instance;
+        if (floatingAmmoController != null)
+        {
+            Destroy(floatingAmmoController.gameObject);
+        }
+
+        if (Chainloader.PluginInfos.ContainsKey("com.tyfon.uifixes"))
+        {
+            UIFixes.Disable();
+        }
+        if (Chainloader.PluginInfos.ContainsKey("com.fika.core"))
+        {
+            External.Fika.Disable();
+        }
+
+        _patchManager?.DisablePatches();
+        _patchManager = null;
+    }
+#endif
 }

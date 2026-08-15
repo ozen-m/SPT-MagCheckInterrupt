@@ -12,14 +12,11 @@ namespace MagCheckInterrupt.Patches;
 /// </summary>
 public class AmmoDetailsPatch : ModulePatch
 {
-    private static readonly AccessTools.FieldRef<EftBattleUIScreen, AmmoCountPanel> _ammoCountPanelField =
-        AccessTools.FieldRefAccess<EftBattleUIScreen, AmmoCountPanel>("_ammoCountPanel");
-
-    private static AmmoDetails _lastAmmoDetail;
+    private static AmmoDetails _lastAmmoDetails;
 
     protected override MethodBase GetTargetMethod()
     {
-        return AccessTools.Method(typeof(GamePlayerOwner), nameof(GamePlayerOwner.method_8));
+        return AccessTools.Method(typeof(GamePlayerOwner), nameof(GamePlayerOwner.PlayerOnOnShowAmmoDetails));
     }
 
     [PatchPrefix]
@@ -32,28 +29,38 @@ public class AmmoDetailsPatch : ModulePatch
         bool foldingMechanimWeapon
     )
     {
-        _lastAmmoDetail = new AmmoDetails(ammoCount, maxAmmoCount, mastering, details, foldingMechanimWeapon);
+        // Show for stationary weapons
+        if (__instance.Player.MovementContext._stationaryWeapon != null)
+        {
+            return true;
+        }
+
+        _lastAmmoDetails = new AmmoDetails(ammoCount, maxAmmoCount, mastering, details, foldingMechanimWeapon);
         return false;
     }
 
-    public static void ShowLastAmmoDetail()
+    public static void ShowLastAmmoDetails()
     {
         Singleton<CommonUI>.Instance.EftBattleUIScreen.ShowAmmoDetails(
-            _lastAmmoDetail.AmmoCount,
-            _lastAmmoDetail.MaxAmmoCount,
-            _lastAmmoDetail.Mastering,
-            _lastAmmoDetail.Details,
-            _lastAmmoDetail.FoldingMechanimWeapon
+            _lastAmmoDetails.AmmoCount,
+            _lastAmmoDetails.MaxAmmoCount,
+            _lastAmmoDetails.Mastering,
+            _lastAmmoDetails.Details,
+            _lastAmmoDetails.FoldingMechanimWeapon
         );
+    }
+
+    public static AmmoDetails GetLastAmmoDetails()
+    {
+        return _lastAmmoDetails;
     }
 
     public static void HideAmmoCount()
     {
-        var ammoCountPanel = _ammoCountPanelField(Singleton<CommonUI>.Instance.EftBattleUIScreen);
-        ammoCountPanel.Hide();
+        Singleton<CommonUI>.Instance.EftBattleUIScreen._ammoCountPanel.Hide();
     }
 
-    private readonly struct AmmoDetails(int ammoCount, int maxAmmoCount, int mastering, string details, bool foldingMechanimWeapon)
+    public readonly struct AmmoDetails(int ammoCount, int maxAmmoCount, int mastering, string details, bool foldingMechanimWeapon)
     {
         public readonly int AmmoCount = ammoCount;
         public readonly int MaxAmmoCount = maxAmmoCount;

@@ -1,15 +1,12 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
-using EFT.InputSystem;
-using HarmonyLib;
-using MagCheckInterrupt.Components;
 using MagCheckInterrupt.External;
 using MagCheckInterrupt.Utils;
 using SPT.Reflection.Patching;
 
 namespace MagCheckInterrupt;
 
-[BepInPlugin("com.ozen.magcheckinterrupt", "MagCheckInterrupt", "1.1.0")]
+[BepInPlugin("com.ozen.magcheckinterrupt", "Magazine Check Interrupt", "1.1.0")]
 [BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
 public class MagCheckInterrupt : BaseUnityPlugin

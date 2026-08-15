@@ -51,12 +51,12 @@ public class FloatingPanelController : MonoBehaviour
         var ammoPanel = Singleton<CommonUI>.Instance.EftBattleUIScreen._ammoCountPanel;
         var panel = Instantiate(ammoPanel, canvasTransform, false);
 
-        var panelRect = panel.GetComponent<RectTransform>();
-        panelRect.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-        panelRect.localScale = Vector3.one;
+        var panelTransform = panel.transform;
+        panelTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        panelTransform.localScale = Vector3.one;
 
         var controller = controllerObject.AddComponent<FloatingPanelController>();
-        controller._panelTransform = panelRect;
+        controller._panelTransform = panelTransform;
         controller._panel = panel;
         controller._cameraTransform = CameraManager.Instance._camera.transform;
         controller._onFinish = controller.AnimationFinished; // Cache the action
@@ -79,6 +79,13 @@ public class FloatingPanelController : MonoBehaviour
     public void ShowAmmoDetails(FirearmController controller)
     {
         var magazine = controller.GunBaseTransform.GetComponentInChildren<MagazineInHandsVisualController>();
+        if (magazine == null)
+        {
+            L.Warning("Could not find magazine!");
+            AmmoDetailsPatch.ShowLastAmmoDetails();
+            return;
+        }
+
         _magazineTransform = magazine.transform;
 
         var ammoDetails = AmmoDetailsPatch.GetLastAmmoDetails();

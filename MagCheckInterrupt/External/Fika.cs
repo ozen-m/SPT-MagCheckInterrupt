@@ -26,6 +26,7 @@ public static class Fika
     private static string[] _cachedConfigValues;
 
     private static bool _configReceivedFromHost;
+    private static Action _unsubSettingsChanged;
 
     public static void Init()
     {
@@ -75,12 +76,11 @@ public static class Fika
         switch (eventArgs.Manager)
         {
             case FikaClient client:
-                ConfigUtil.SetBrowsable(true);
-                ConfigUtil.DisplayIsUsingFikaHostConfig(true);
+                ConfigUtil.SetReadOnly(true);
                 client.RegisterPacket(new Action<ConfigPacket>(OnReceiveConfigPacket));
                 break;
             case FikaServer:
-                ConfigUtil.RegisterSettingsChanged(OnHostSettingsChanged);
+                _unsubSettingsChanged = ConfigUtil.SubscribeSettingsChanged(OnHostSettingsChanged);
                 break;
         }
 
@@ -137,7 +137,11 @@ public static class Fika
 
     private static void OnGameEnded(FikaGameEndedEvent eventArgs)
     {
-        if (eventArgs.IsServer) return;
+        if (eventArgs.IsServer)
+        {
+            _unsubSettingsChanged?.Invoke();
+            return;
+        }
 
         RestoreConfig();
     }
@@ -147,8 +151,7 @@ public static class Fika
         if (!_configReceivedFromHost) return;
 
         ConfigUtil.SetConfigValues(_cachedConfigValues);
-        ConfigUtil.DisplayIsUsingFikaHostConfig(false);
-        ConfigUtil.SetBrowsable(false);
+        ConfigUtil.SetReadOnly(false);
         _configReceivedFromHost = false;
         _cachedConfigValues = null;
     }

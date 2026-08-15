@@ -24,41 +24,10 @@ public static class ConfigUtil
 
     private static readonly List<ConfigEntryBase> _syncedConfigs = [];
     private static ConfigFile _configFile;
-    private static ConfigEntry<bool> _fikaHostConfig;
-    private static GUIStyle _centeredStyle;
 
     public static void Init(ConfigFile configFile)
     {
         _configFile = configFile;
-
-        _fikaHostConfig = _configFile.Bind(
-            string.Empty,
-            "FikaHostConfig",
-            false,
-            new ConfigDescription(
-                "This is displayed when a Fika Client is using the Host's config",
-                null,
-                new ConfigurationManagerAttributes
-                {
-                    Order = 33,
-                    Browsable = false,
-                    HideDefaultButton = true,
-                    HideSettingName = true,
-                    CustomDrawer = (_) =>
-                    {
-                        _centeredStyle ??= new GUIStyle(GUI.skin.label)
-                        {
-                            richText = true,
-                            wordWrap = true,
-                            alignment = TextAnchor.MiddleCenter,
-                            fontSize = 18,
-                        };
-
-                        GUILayout.Label("<color=#4DA6FF><b>Configuration is set by the Fika Host</b></color>", _centeredStyle);
-                    },
-                }
-            )
-        );
 
         ReloadMode = _configFile.Bind(
             "General",
@@ -70,9 +39,61 @@ public static class ConfigUtil
                 new ConfigurationManagerAttributes { Order = 41 }
             )
         );
+
+        FloatingAmmoDetails = _configFile.Bind(
+            "Ammo Details",
+            "Follows Magazine",
+            true,
+            new ConfigDescription(
+                "If enabled, the ammo details UI follows the magazine",
+                null,
+                new ConfigurationManagerAttributes { Order = 39 }
+            )
+        );
+        OffsetPosX = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset X",
+            -0.02f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 38, IsAdvanced = true }
+            )
+        );
+        OffsetPosY = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset Y",
+            0.075f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 37, IsAdvanced = true }
+            )
+        );
+        OffsetPosZ = _configFile.Bind(
+            "Ammo Details",
+            "Position Offset Z",
+            -0.01f,
+            new ConfigDescription(
+                string.Empty,
+                null,
+                new ConfigurationManagerAttributes { Order = 36, IsAdvanced = true }
+            )
+        );
+        Scale = _configFile.Bind(
+            "Ammo Details",
+            "Scale",
+            1f,
+            new ConfigDescription(
+                string.Empty,
+                new AcceptableValueRange<float>(0.0001f, 2f),
+                new ConfigurationManagerAttributes { Order = 35, IsAdvanced = true }
+            )
+        );
+
         ReloadWindowStart = _configFile.Bind(
-            "General",
-            "Reload Window Start",
+            "Reload Window",
+            "Start",
             0.23f,
             new ConfigDescription(
                 "How early you can reload during the magazine check animation, in normalized time",
@@ -81,8 +102,8 @@ public static class ConfigUtil
             )
         );
         ReloadWindowEnd = _configFile.Bind(
-            "General",
-            "Reload Window End",
+            "Reload Window",
+            "End",
             0.6f,
             new ConfigDescription(
                 "How late you can reload during the magazine check animation, in normalized time",
@@ -142,57 +163,6 @@ public static class ConfigUtil
             )
         );
 
-        FloatingAmmoDetails = _configFile.Bind(
-            "Ammo Details",
-            "Follows Magazine",
-            true,
-            new ConfigDescription(
-                "If enabled, the ammo details UI follows the magazine",
-                null,
-                new ConfigurationManagerAttributes { Order = 5 }
-            )
-        );
-        OffsetPosX = _configFile.Bind(
-            "Ammo Details",
-            "Position Offset X",
-            -0.02f,
-            new ConfigDescription(
-                string.Empty,
-                null,
-                new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }
-            )
-        );
-        OffsetPosY = _configFile.Bind(
-            "Ammo Details",
-            "Position Offset Y",
-            0.075f,
-            new ConfigDescription(
-                string.Empty,
-                null,
-                new ConfigurationManagerAttributes { Order = 3, IsAdvanced = true }
-            )
-        );
-        OffsetPosZ = _configFile.Bind(
-            "Ammo Details",
-            "Position Offset Z",
-            -0.01f,
-            new ConfigDescription(
-                string.Empty,
-                null,
-                new ConfigurationManagerAttributes { Order = 2, IsAdvanced = true }
-            )
-        );
-        Scale = _configFile.Bind(
-            "Ammo Details",
-            "Scale",
-            1f,
-            new ConfigDescription(
-                string.Empty,
-                new AcceptableValueRange<float>(0.0001f, 2f),
-                new ConfigurationManagerAttributes { Order = 1, IsAdvanced = true }
-            )
-        );
-
         _syncedConfigs.Add(ReloadWindowStart);
         _syncedConfigs.Add(ReloadWindowEnd);
         _syncedConfigs.Add(SlowAnimation);
@@ -202,12 +172,13 @@ public static class ConfigUtil
         _syncedConfigs.Add(SlowSmoothing);
     }
 
-    public static void RegisterSettingsChanged(EventHandler<SettingChangedEventArgs> eventArgs)
+    public static Action SubscribeSettingsChanged(EventHandler<SettingChangedEventArgs> eventArgs)
     {
         _configFile.SettingChanged += eventArgs;
+        return () => _configFile.SettingChanged -= eventArgs;
     }
 
-    public static void SetBrowsable(bool isBrowsable)
+    public static void SetReadOnly(bool readOnly)
     {
         foreach (var config in _syncedConfigs)
         {
@@ -215,20 +186,13 @@ public static class ConfigUtil
             {
                 if (tag is not ConfigurationManagerAttributes attr) continue;
 
-                attr.Browsable = isBrowsable;
+                attr.ReadOnly = readOnly;
+                attr.CustomDrawer = !readOnly
+                    ? null
+                    : (_) => { GUILayout.Label("<color=grey>Set by the Fika Host</color>", GUILayout.ExpandWidth(true)); };
+
                 break;
             }
-        }
-    }
-
-    public static void DisplayIsUsingFikaHostConfig(bool usingFikaHost)
-    {
-        foreach (var tag in _fikaHostConfig.Description.Tags)
-        {
-            if (tag is not ConfigurationManagerAttributes attr) continue;
-
-            attr.Browsable = usingFikaHost;
-            return;
         }
     }
 

@@ -6,7 +6,7 @@ using SPT.Reflection.Patching;
 
 namespace MagCheckInterrupt;
 
-[BepInPlugin("com.ozen.magcheckinterrupt", "Magazine Check Interrupt", "1.1.0")]
+[BepInPlugin("com.ozen.magcheckinterrupt", "Magazine Check Interrupt", "1.1.1")]
 [BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
 public class MagCheckInterrupt : BaseUnityPlugin

@@ -137,6 +137,11 @@ public static class Fika
 
     private static void OnGameEnded(FikaGameEndedEvent eventArgs)
     {
+        if (eventArgs.ExitStatus == ExitStatus.Transit)
+        {
+            return;
+        }
+
         if (eventArgs.IsServer)
         {
             _unsubSettingsChanged?.Invoke();

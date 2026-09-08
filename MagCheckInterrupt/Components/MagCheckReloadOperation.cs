@@ -254,6 +254,11 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
     public override void OnIdleStartEvent()
     {
         L.Debug("MagCheckReloadOperation::OnIdleStartEvent");
+        if (State != EOperationState.Ready)
+        {
+            L.Error($"Unsupported magazine check hash for weapon: {Weapon.ToFullString()}");
+            State = EOperationState.Ready;
+        }
         base.OnIdleStartEvent();
 
         if (!Player.FirstPersonPointOfView) return;

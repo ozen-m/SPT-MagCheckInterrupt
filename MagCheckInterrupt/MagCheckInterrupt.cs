@@ -1,5 +1,8 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
+using EFT.InputSystem;
+using HarmonyLib;
+using MagCheckInterrupt.Components;
 using MagCheckInterrupt.External;
 using MagCheckInterrupt.Utils;
 using SPT.Reflection.Patching;
@@ -49,6 +52,8 @@ public class MagCheckInterrupt : BaseUnityPlugin
 #if DEBUG
     protected void OnDestroy()
     {
+        Destroy(PlayerStateDebug.Instance);
+
         var floatingAmmoController = FloatingPanelController.Instance;
         if (floatingAmmoController != null)
         {

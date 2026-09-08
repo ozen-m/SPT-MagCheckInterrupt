@@ -10,6 +10,18 @@ public class PlayerStateDebug : MonoBehaviour
     private bool _init;
     private Player _player;
 
+    public static PlayerStateDebug Instance
+    {
+        get
+        {
+            if (field == null)
+            {
+                field = Create(GamePlayerOwner.MyPlayer);
+            }
+            return field;
+        }
+    }
+
     public static PlayerStateDebug Create(Player player)
     {
         var debugGui = player.GetOrAddComponent<PlayerStateDebug>();

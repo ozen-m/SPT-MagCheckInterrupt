@@ -20,21 +20,12 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
     #endregion
 
 #if DEBUG
-    private static PlayerStateDebug _playerStateDebug;
-
     public new void Start(EUtilityType utilityType)
     {
         base.Start(utilityType);
 
         L.Debug("MagCheckReloadOperation::Start");
-        if (_playerStateDebug == null)
-        {
-            _playerStateDebug = PlayerStateDebug.Create(Player);
-        }
-        else
-        {
-            _playerStateDebug.SetPlayer(Player);
-        }
+        PlayerStateDebug.Instance.SetPlayer(Player);
     }
 #endif
 

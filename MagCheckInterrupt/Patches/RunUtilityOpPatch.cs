@@ -20,8 +20,10 @@ public class RunUtilityOpPatch : ModulePatch
     [PatchPrefix]
     public static bool Prefix(Idling __instance, UtilityOperation.EUtilityType utilityType)
     {
-        if (utilityType != UtilityOperation.EUtilityType.CheckMagazine) return true;
-        if (__instance.Player.IsAI) return true;
+        if (utilityType != UtilityOperation.EUtilityType.CheckMagazine || __instance.Player.IsAI)
+        {
+            return true;
+        }
 
         if (!WeaponUsesExternalMag(__instance.Weapon))
         {
@@ -45,6 +47,6 @@ public class RunUtilityOpPatch : ModulePatch
     private static bool WeaponUsesExternalMag(Weapon weapon)
     {
         return weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazine
-               || weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport;
+            || weapon.ReloadMode == Weapon.EReloadMode.ExternalMagazineWithInternalReloadSupport;
     }
 }

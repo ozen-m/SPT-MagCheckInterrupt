@@ -54,31 +54,19 @@ public static class ConfigUtil
             "Ammo Details",
             "Position Offset X",
             -0.02f,
-            new ConfigDescription(
-                string.Empty,
-                null,
-                new ConfigurationManagerAttributes { Order = 38, IsAdvanced = true }
-            )
+            new ConfigDescription(string.Empty, null, new ConfigurationManagerAttributes { Order = 38, IsAdvanced = true })
         );
         OffsetPosY = _configFile.Bind(
             "Ammo Details",
             "Position Offset Y",
             0.075f,
-            new ConfigDescription(
-                string.Empty,
-                null,
-                new ConfigurationManagerAttributes { Order = 37, IsAdvanced = true }
-            )
+            new ConfigDescription(string.Empty, null, new ConfigurationManagerAttributes { Order = 37, IsAdvanced = true })
         );
         OffsetPosZ = _configFile.Bind(
             "Ammo Details",
             "Position Offset Z",
             -0.01f,
-            new ConfigDescription(
-                string.Empty,
-                null,
-                new ConfigurationManagerAttributes { Order = 36, IsAdvanced = true }
-            )
+            new ConfigDescription(string.Empty, null, new ConfigurationManagerAttributes { Order = 36, IsAdvanced = true })
         );
         Scale = _configFile.Bind(
             "Ammo Details",
@@ -98,7 +86,12 @@ public static class ConfigUtil
             new ConfigDescription(
                 "How early you can reload during the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
-                new ConfigurationManagerAttributes { Order = 32, ShowRangeAsPercent = true, IsAdvanced = true }
+                new ConfigurationManagerAttributes
+                {
+                    Order = 32,
+                    ShowRangeAsPercent = true,
+                    IsAdvanced = true,
+                }
             )
         );
         ReloadWindowEnd = _configFile.Bind(
@@ -108,7 +101,12 @@ public static class ConfigUtil
             new ConfigDescription(
                 "How late you can reload during the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
-                new ConfigurationManagerAttributes { Order = 31, ShowRangeAsPercent = true, IsAdvanced = true }
+                new ConfigurationManagerAttributes
+                {
+                    Order = 31,
+                    ShowRangeAsPercent = true,
+                    IsAdvanced = true,
+                }
             )
         );
 
@@ -129,7 +127,12 @@ public static class ConfigUtil
             new ConfigDescription(
                 "Multiplier for the magazine check animation speed when Slow Animation is enabled",
                 new AcceptableValueRange<float>(0.01f, 1f),
-                new ConfigurationManagerAttributes { Order = 14, ShowRangeAsPercent = true, IsAdvanced = true }
+                new ConfigurationManagerAttributes
+                {
+                    Order = 14,
+                    ShowRangeAsPercent = true,
+                    IsAdvanced = true,
+                }
             )
         );
         SlowAnimationStart = _configFile.Bind(
@@ -139,7 +142,12 @@ public static class ConfigUtil
             new ConfigDescription(
                 "When to start slowing down the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
-                new ConfigurationManagerAttributes { Order = 13, ShowRangeAsPercent = true, IsAdvanced = true }
+                new ConfigurationManagerAttributes
+                {
+                    Order = 13,
+                    ShowRangeAsPercent = true,
+                    IsAdvanced = true,
+                }
             )
         );
         SlowAnimationEnd = _configFile.Bind(
@@ -149,7 +157,12 @@ public static class ConfigUtil
             new ConfigDescription(
                 "When to restore speed of the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),
-                new ConfigurationManagerAttributes { Order = 12, ShowRangeAsPercent = true, IsAdvanced = true }
+                new ConfigurationManagerAttributes
+                {
+                    Order = 12,
+                    ShowRangeAsPercent = true,
+                    IsAdvanced = true,
+                }
             )
         );
         SlowSmoothing = _configFile.Bind(
@@ -184,12 +197,15 @@ public static class ConfigUtil
         {
             foreach (var tag in config.Description.Tags)
             {
-                if (tag is not ConfigurationManagerAttributes attr) continue;
+                if (tag is not ConfigurationManagerAttributes attr)
+                {
+                    continue;
+                }
 
                 attr.ReadOnly = readOnly;
                 attr.CustomDrawer = !readOnly
                     ? null
-                    : (_) => { GUILayout.Label("<color=grey>Set by the Fika Host</color>", GUILayout.ExpandWidth(true)); };
+                    : (_) => GUILayout.Label("<color=grey>Set by the Fika Host</color>", GUILayout.ExpandWidth(true));
 
                 break;
             }
@@ -200,9 +216,7 @@ public static class ConfigUtil
     {
         if (values.Length != _syncedConfigs.Count)
         {
-            L.Error(
-                $"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_syncedConfigs.Count}"
-            );
+            L.Error($"ConfigUtil::SetConfigValues ArgumentOutOfRange {nameof(values)}. Arg: {values.Length} != {_syncedConfigs.Count}");
             NotificationManager.DisplayWarningNotification(
                 "MagCheckInterrupt: Unable to set config values. Different mod version with the host?",
                 ENotificationDurationType.Long

@@ -68,11 +68,13 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
         }
 
         // isReleased
-        if (Weapon.IsBoltCatch
+        if (
+            Weapon.IsBoltCatch
             && Weapon.ChamberAmmoCount == 1
             && !Weapon.ManualBoltCatch
             && !Weapon.MustBoltBeOpennedForExternalReload
-            && !Weapon.MustBoltBeOpennedForInternalReload)
+            && !Weapon.MustBoltBeOpennedForInternalReload
+        )
         {
             FirearmsAnimator.SetBoltCatch(false);
         }
@@ -100,7 +102,10 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
     {
         L.Debug("SwapReloadOperation::OnMagPulledOutFromWeapon");
 
-        if (_magPulledOutFromWeapon) return;
+        if (_magPulledOutFromWeapon)
+        {
+            return;
+        }
 
         _magPulledOutFromWeapon = true;
         FirearmsAnimator.SetAmmoOnMag(0);
@@ -115,7 +120,10 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
     {
         L.Debug("SwapReloadOperation::OnMagPuttedToRig");
 
-        if (_magPuttedToRig) return;
+        if (_magPuttedToRig)
+        {
+            return;
+        }
 
         _magPuttedToRig = true;
         Firearms.RemoveMod(_weaponMagazineSlot);
@@ -149,7 +157,10 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
     {
         L.Debug("SwapReloadOperation::OnShellEjectEvent");
 
-        if (_shellEjected) return;
+        if (_shellEjected)
+        {
+            return;
+        }
 
         _shellEjected = true;
         if (Weapon.MustBoltBeOpennedForExternalReload && Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire)
@@ -161,7 +172,10 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
 
         foreach (var chamber in Weapon.Chambers)
         {
-            if (chamber.ContainedItem is not Ammo { IsUsed: false } ammoItemClass) continue;
+            if (chamber.ContainedItem is not Ammo { IsUsed: false } ammoItemClass)
+            {
+                continue;
+            }
 
             Firearms.MoveAmmoFromChamberToShellPort(ammoItemClass.IsUsed, 0);
             Firearms.StartSpawnShell(Player.Velocity * 0.66f, 0);
@@ -175,7 +189,10 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
     {
         L.Debug("SwapReloadOperation::RemoveAmmoFromChamber");
 
-        if (_ammoRemovedFromChamber) return;
+        if (_ammoRemovedFromChamber)
+        {
+            return;
+        }
 
         _ammoRemovedFromChamber = true;
         if (Weapon.MustBoltBeOpennedForExternalReload && Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire)
@@ -202,7 +219,10 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
     {
         L.Debug("SwapReloadOperation::OnMagAppeared");
 
-        if (_magAppeared) return;
+        if (_magAppeared)
+        {
+            return;
+        }
 
         _magAppeared = true;
         InsertMagazine();
@@ -225,18 +245,25 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
     {
         L.Debug("SwapReloadOperation::OnMagInsertedToWeapon");
 
-        if (_magInsertedToWeapon) return;
+        if (_magInsertedToWeapon)
+        {
+            return;
+        }
 
         _magInsertedToWeapon = true;
         FirearmsAnimator.SetAmmoOnMag(_insertMagResult.MagazineAmmoCount + (_insertMagResult.HasNewAmmo ? 1 : 0));
         FirearmsAnimator.SetMagInWeapon(true);
         FirearmsAnimator.SetAmmoCompatible(_insertMagResult.AmmoCompatible);
 
-        if (!_insertMagResult.HasNewAmmo
-            && (Weapon.MalfState.State != Weapon.EMalfunctionState.Misfire
+        if (
+            !_insertMagResult.HasNewAmmo
+            && (
+                Weapon.MalfState.State != Weapon.EMalfunctionState.Misfire
                 || !Weapon.MalfState.IsKnownMalfunction(Player.ProfileId)
                 || !_insertMagResult.AmmoCompatible
-                || _insertMagResult.Magazine.Count <= 0))
+                || _insertMagResult.Magazine.Count <= 0
+            )
+        )
         {
             EndOperation();
         }
@@ -257,7 +284,10 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
     {
         L.Debug("SwapReloadOperation::OnAddAmmoInChamber");
 
-        if (_addedAmmoInChamber) return;
+        if (_addedAmmoInChamber)
+        {
+            return;
+        }
 
         _addedAmmoInChamber = true;
         FirearmsAnimator.SetAmmoOnMag(_insertMagResult.Magazine.Count);
@@ -323,21 +353,25 @@ public class SwapReloadOperation(FirearmController controller) : FirearmOperatio
         FirearmsAnimator.SetMagTypeCurrent(_insertMagResult.Magazine.magAnimationIndex);
 
         // isReleased
-        if (Weapon.IsBoltCatch
+        if (
+            Weapon.IsBoltCatch
             && Weapon.ChamberAmmoCount == 1
             && !_insertMagResult.HasNewAmmo
             && !Weapon.ManualBoltCatch
             && !Weapon.MustBoltBeOpennedForExternalReload
-            && !Weapon.MustBoltBeOpennedForInternalReload)
+            && !Weapon.MustBoltBeOpennedForInternalReload
+        )
         {
             FirearmsAnimator.SetBoltCatch(false);
         }
 
         // isMalfunction
-        if (Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire
+        if (
+            Weapon.MalfState.State == Weapon.EMalfunctionState.Misfire
             && Weapon.MalfState.IsKnownMalfunction(Player.ProfileId)
             && _insertMagResult.Magazine.Count > 0
-            && _insertMagResult.AmmoCompatible)
+            && _insertMagResult.AmmoCompatible
+        )
         {
             FirearmsAnimator.SetAmmoInChamber(0f);
             FirearmsAnimator.SetLayerWeight(FirearmsAnimator.MALFUNCTION_LAYER_INDEX, 0);

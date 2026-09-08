@@ -62,7 +62,10 @@ public static class Fika
     public static void SendReloadCalledPacket()
     {
         var networkManager = Singleton<IFikaNetworkManager>.Instance;
-        if (networkManager is null) return;
+        if (networkManager is null)
+        {
+            return;
+        }
 
         var packet = new ReloadCalledPacket(networkManager.NetId);
         networkManager.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
@@ -90,7 +93,10 @@ public static class Fika
 
     private static void OnPeerConnected(PeerConnectedEvent eventArgs)
     {
-        if (!FikaBackendUtils.IsServer) return;
+        if (!FikaBackendUtils.IsServer)
+        {
+            return;
+        }
 
         L.Info($"Peer connected, sending config to peer {eventArgs.Peer.Id}");
         var packet = new ConfigPacket(_cachedConfigValues);
@@ -99,7 +105,10 @@ public static class Fika
 
     private static void OnRaidStarted(FikaRaidStartedEvent ev)
     {
-        if (ev.IsServer || _configReceivedFromHost) return;
+        if (ev.IsServer || _configReceivedFromHost)
+        {
+            return;
+        }
 
         L.Error("Config packet not received! MagCheckInterrupt missing from host?");
         NotificationManager.DisplayWarningNotification(
@@ -118,10 +127,22 @@ public static class Fika
     {
         L.Debug("Fika::OnReceiveReloadCalledPacket Received ReloadCalledPacket");
 
-        if (!CoopHandler.TryGetCoopHandler(out var coopHandler)) return;
-        if (!coopHandler.Players.TryGetValue(packet.NetId, out var player)) return;
-        if (player.HandsController is not FirearmController firearmController) return;
-        if (firearmController.CurrentOperation is not MagCheckReloadOperation operation) return;
+        if (!CoopHandler.TryGetCoopHandler(out var coopHandler))
+        {
+            return;
+        }
+        if (!coopHandler.Players.TryGetValue(packet.NetId, out var player))
+        {
+            return;
+        }
+        if (player.HandsController is not FirearmController firearmController)
+        {
+            return;
+        }
+        if (firearmController.CurrentOperation is not MagCheckReloadOperation operation)
+        {
+            return;
+        }
 
         operation.SetReloadCalled();
 
@@ -153,7 +174,10 @@ public static class Fika
 
     public static void RestoreConfig()
     {
-        if (!_configReceivedFromHost) return;
+        if (!_configReceivedFromHost)
+        {
+            return;
+        }
 
         ConfigUtil.SetConfigValues(_cachedConfigValues);
         ConfigUtil.SetReadOnly(false);

@@ -68,7 +68,10 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
             }
         }
 
-        if (!ConfigUtil.SlowAnimation.Value) return;
+        if (!ConfigUtil.SlowAnimation.Value)
+        {
+            return;
+        }
 
         switch (_animSpeedState)
         {
@@ -102,7 +105,10 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override void OnUtilityOperationStartEvent()
     {
-        if (!Player.FirstPersonPointOfView || ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Press) return;
+        if (!Player.FirstPersonPointOfView || ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Press)
+        {
+            return;
+        }
 
         if (KeybindsUtil.AreCheckAndReloadKeysConflicting())
         {
@@ -112,7 +118,10 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override bool CanStartReload()
     {
-        if (State != EOperationState.Ready) return false;
+        if (State != EOperationState.Ready)
+        {
+            return false;
+        }
 
         var normalizedTime = FirearmsAnimator.GetNormalizedTime(FirearmsAnimator.HANDS_LAYER_INDEX);
         return normalizedTime > ConfigUtil.ReloadWindowStart.Value && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
@@ -209,15 +218,14 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
             }
 
             State = EOperationState.Finished;
-            Controller.InitiateOperation<SwapReloadOperation>()
-               .Start((Magazine)_swapAddSuboperation._item, (Slot)_swapAddSuboperation._to.Container, callback);
+            Controller
+                .InitiateOperation<SwapReloadOperation>()
+                .Start((Magazine)_swapAddSuboperation._item, (Slot)_swapAddSuboperation._to.Container, callback);
             return;
         }
 
         // AddSuboperation - Remove magazine operation
-        if (oneItemOperation.From1 is not null
-            && oneItemOperation.From1.IsChildOf(Weapon)
-            && oneItemOperation is AddSuboperation removeOp)
+        if (oneItemOperation.From1 is not null && oneItemOperation.From1.IsChildOf(Weapon) && oneItemOperation is AddSuboperation removeOp)
         {
             L.Debug("MagCheckReloadOperation::Execute Remove mag operation...skipped");
             _swapAddSuboperation = removeOp;
@@ -261,11 +269,17 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
         }
         base.OnIdleStartEvent();
 
-        if (!Player.FirstPersonPointOfView) return;
+        if (!Player.FirstPersonPointOfView)
+        {
+            return;
+        }
 
         AnimationUtil.HideAmmoDetails();
 
-        if (ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Release) return;
+        if (ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Release)
+        {
+            return;
+        }
 
         if (KeybindsUtil.AreCheckAndReloadKeysConflicting())
         {

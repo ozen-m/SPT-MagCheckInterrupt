@@ -58,7 +58,10 @@ public static class AnimationUtil
 
         DoReloadCrossfade(operation, wrapper, isFast, isSwap);
 
-        if (!operation.Player.FirstPersonPointOfView) return;
+        if (!operation.Player.FirstPersonPointOfView)
+        {
+            return;
+        }
 
         // We don't want observed players re-sending packets and
         // our packet needs to be sent first before Fika's reload packet (ReloadMag.startCallback).

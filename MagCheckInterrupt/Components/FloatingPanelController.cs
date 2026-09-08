@@ -70,9 +70,9 @@ public class FloatingPanelController : MonoBehaviour
         _panelTransform.localScale = Vector3.one * ConfigUtil.Scale.Value;
         _panelTransform.SetPositionAndRotation(
             _magazineTransform.position
-            + (_magazineTransform.right * ConfigUtil.OffsetPosX.Value)
-            + (_magazineTransform.up * ConfigUtil.OffsetPosY.Value)
-            + (_magazineTransform.forward * ConfigUtil.OffsetPosZ.Value),
+                + (_magazineTransform.right * ConfigUtil.OffsetPosX.Value)
+                + (_magazineTransform.up * ConfigUtil.OffsetPosY.Value)
+                + (_magazineTransform.forward * ConfigUtil.OffsetPosZ.Value),
             Quaternion.LookRotation(_magazineTransform.position - _cameraTransform.position, _cameraTransform.up)
         );
     }
@@ -126,6 +126,8 @@ public class FloatingPanelController : MonoBehaviour
         _magazineTransform = null;
     }
 
-    private static readonly AccessTools.FieldRef<AmmoCountPanel, BattleUIComponentAnimation> _animationField =
-        AccessTools.FieldRefAccess<AmmoCountPanel, BattleUIComponentAnimation>("_animation");
+    private static readonly AccessTools.FieldRef<AmmoCountPanel, BattleUIComponentAnimation> _animationField = AccessTools.FieldRefAccess<
+        AmmoCountPanel,
+        BattleUIComponentAnimation
+    >("_animation");
 }

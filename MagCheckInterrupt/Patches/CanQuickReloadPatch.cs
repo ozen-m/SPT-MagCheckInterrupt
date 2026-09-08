@@ -13,13 +13,19 @@ public class CanQuickReloadPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return AccessTools.PropertyGetter(typeof(FirearmHandsInputTranslator), nameof(FirearmHandsInputTranslator.InIdleStateForInvokeOperation));
+        return AccessTools.PropertyGetter(
+            typeof(FirearmHandsInputTranslator),
+            nameof(FirearmHandsInputTranslator.InIdleStateForInvokeOperation)
+        );
     }
 
     [PatchPostfix]
     protected static void Postfix(FirearmHandsInputTranslator __instance, ref bool __result)
     {
-        if (__result) return;
+        if (__result)
+        {
+            return;
+        }
 
         if (__instance._controller is FirearmController { CurrentOperation: MagCheckReloadOperation })
         {

@@ -21,7 +21,10 @@ public class ReloadConflictPatch : ModulePatch
     [PatchPrefix]
     protected static bool Prefix(FirearmHandsInputTranslator __instance)
     {
-        if (!_toSkip) return true;
+        if (!_toSkip)
+        {
+            return true;
+        }
 
         _toSkip = false;
         return false;

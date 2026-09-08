@@ -19,7 +19,10 @@ public class ReloadAnimationPatch : ModulePatch
     [PatchPrefix]
     public static bool Prefix(FirearmsAnimator __instance)
     {
-        if (!_toSkip) return true;
+        if (!_toSkip)
+        {
+            return true;
+        }
 
         L.Debug("ReloadAnimationPatch::Prefix Skipped reload animation");
         _toSkip = false;

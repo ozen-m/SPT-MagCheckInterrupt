@@ -27,18 +27,13 @@
 
   <!--  Release -->
   <Target Name="CopyOutputRelease" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
-    <Copy
-      SourceFiles="@(OutputDLL)"
-      DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)" />
-    <Copy
-      SourceFiles="@(Config)"
-      DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)\config\%(RecursiveDir)" />
-    <Copy
-      SourceFiles="@(Bundles)"
-      DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)\bundles\%(RecursiveDir)" />
+    <Copy SourceFiles="@(OutputDLL)" DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)" />
+    <Copy SourceFiles="@(Config)" DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)\config\%(RecursiveDir)" />
+    <Copy SourceFiles="@(Bundles)" DestinationFolder="$(SolutionDir)Dist\$(SolutionName)\$(DestDir)\bundles\%(RecursiveDir)" />
     <ZipDirectory
       SourceDirectory="$(SolutionDir)Dist\$(SolutionName)"
       DestinationFile="$(SolutionDir)Dist\$(Authors).$(SolutionName)-$(Version).zip"
-      Overwrite="true" />
+      Overwrite="true"
+    />
   </Target>
 </Project>

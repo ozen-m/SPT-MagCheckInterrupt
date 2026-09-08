@@ -100,7 +100,7 @@
   <Target Name="SetOutput" AfterTargets="Build">
     <PropertyGroup>
       <DestDir>BepInEx\plugins\$(Authors).$(SolutionName)</DestDir>
-<!--      <DestDir Condition="'$(Configuration)' == 'Debug'">BepInEx\scripts\</DestDir>-->
+      <!--      <DestDir Condition="'$(Configuration)' == 'Debug'">BepInEx\scripts\</DestDir>-->
     </PropertyGroup>
     <ItemGroup>
       <OutputDLL Include="$(TargetPath)" />

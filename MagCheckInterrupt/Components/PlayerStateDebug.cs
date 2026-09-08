@@ -38,7 +38,10 @@ public class PlayerStateDebug : MonoBehaviour
 
     public void Update()
     {
-        if (!_init) return;
+        if (!_init)
+        {
+            return;
+        }
 
         GetPlayerStateSnapshot(_debugText, _player);
     }

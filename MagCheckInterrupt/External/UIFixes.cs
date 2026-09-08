@@ -37,9 +37,18 @@ public class CanExecuteSwapPatch : ModulePatch
     [PatchPostfix]
     public static void Postfix(FirearmController __instance, IInventoryOperation operation, ref bool __result)
     {
-        if (__result) return;
-        if (__instance.CurrentOperation is not MagCheckReloadOperation) return;
-        if (operation is not (SwapOperation or AddSuboperation or RemoveSuboperation)) return;
+        if (__result)
+        {
+            return;
+        }
+        if (__instance.CurrentOperation is not MagCheckReloadOperation)
+        {
+            return;
+        }
+        if (operation is not (SwapOperation or AddSuboperation or RemoveSuboperation))
+        {
+            return;
+        }
 
         __result = true;
     }

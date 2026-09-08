@@ -54,7 +54,11 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
                     _ammoDetailsState = AmmoDetailsState.Shown;
                     break;
                 case AmmoDetailsState.Shown when normalizedTime >= ConfigUtil.ReloadWindowEnd.Value:
-                    AnimationUtil.HideAmmoDetails();
+                    if (ConfigUtil.FloatingAmmoDetails.Value)
+                    {
+                        // Hide only when using floating panel
+                        FloatingPanelController.Instance.Hide();
+                    }
                     _ammoDetailsState = AmmoDetailsState.Hidden;
                     break;
             }

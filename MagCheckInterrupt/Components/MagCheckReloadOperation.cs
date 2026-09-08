@@ -183,6 +183,8 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
     /// <summary>
     /// UI Fixes' reload in place feature uses a SwapOperation.
     /// This override handles that swap.
+    ///
+    /// Flow is AddSuboperation -> RemoveSuboperation (1) -> RemoveSuboperation (2).
     /// </summary>
     public override void Execute(IInventoryOperation operation, Callback callback)
     {
@@ -192,7 +194,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
             return;
         }
 
-        // Insert magazine operation
+        // RemoveSuboperation (2) - Insert magazine operation
         if (oneItemOperation.To1 is not null && oneItemOperation.To1.IsChildOf(Weapon))
         {
             L.Debug("MagCheckReloadOperation::Execute Insert mag operation");
@@ -200,12 +202,9 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
             if (_swapAddSuboperation is null)
             {
-                // Should not be null at this point, start idle operation
+                // Should not be null at this point, rollback the swap operation
                 L.Error("MagCheckReloadOperation::Execute Something unexpected happened while swapping magazines!");
-                callback.Fail("Remove magazine operation is missing during execution of swap reload"); // Throws
-
-                State = EOperationState.Finished;
-                Controller.InitiateOperation<Idling>().Start();
+                callback.Fail("Remove magazine operation is missing during execution of swap reload");
                 return;
             }
 
@@ -215,15 +214,18 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
             return;
         }
 
-        // PullOutMagOperation operation
+        // AddSuboperation - Remove magazine operation
         if (oneItemOperation.From1 is not null
             && oneItemOperation.From1.IsChildOf(Weapon)
             && oneItemOperation is AddSuboperation removeOp)
         {
             L.Debug("MagCheckReloadOperation::Execute Remove mag operation...skipped");
             _swapAddSuboperation = removeOp;
+            callback.Succeed();
+            return;
         }
 
+        // RemoveSuboperation (1)
         callback.Succeed();
     }
 

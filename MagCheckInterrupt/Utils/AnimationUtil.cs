@@ -1,31 +1,11 @@
-﻿using System.Collections.Generic;
-using EFT.InventoryLogic;
+﻿using EFT.InventoryLogic;
 using MagCheckInterrupt.Components;
 using MagCheckInterrupt.Patches;
-using UnityEngine;
 
 namespace MagCheckInterrupt.Utils;
 
 public static class AnimationUtil
 {
-    // TODO: Convert to dict?
-    private static readonly int _magCheckHash = Animator.StringToHash("CHECK");
-    private static readonly int _magReloadOutHash = Animator.StringToHash("RELOAD OUT");
-    private static readonly int _magReloadOutFastHash = Animator.StringToHash("RELOAD OUT ALL");
-
-    private static readonly int _magWithInternalCheckHash = Animator.StringToHash("CHECK MAG");
-    private static readonly int _magWithInternalReloadOutHash = Animator.StringToHash("RELOAD OUT MAG");
-    private static readonly int _magWithInternalReloadOutFastHash = Animator.StringToHash("RELOAD OUT ALL MAG");
-
-    // WTT-Content Backport AS Val Mod4
-    private const int _magCheckValHash = 1180283072;
-    private const int _magReloadOutValHash = 905331964;
-
-    private static readonly int _chamberCatchCheckHash = Animator.StringToHash("CHECK CHAMBER CATCHED");
-    private static readonly int _chamberCatchReloadStartHash = Animator.StringToHash("RELOAD CATCH START");
-
-    private static readonly HashSet<int> _magCheckHashes = [_magCheckHash, _magWithInternalCheckHash, _magCheckValHash, _chamberCatchCheckHash];
-
     public static void ShowAmmoDetails(FirearmController controller)
     {
         if (ConfigUtil.FloatingAmmoDetails.Value)
@@ -58,7 +38,7 @@ public static class AnimationUtil
     public static bool IsMagazineCheckAnimation(this ObjectInHandsAnimator objectInHandsAnimator)
     {
         var currentStateHash = objectInHandsAnimator.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
-        return _magCheckHashes.Contains(currentStateHash);
+        return HashLookup.IsMagazineCheckAnimation(currentStateHash);
     }
 
     /// <summary>
@@ -95,7 +75,7 @@ public static class AnimationUtil
     {
         if (wrapper.TryGetReloadOutHash(out var reloadOutHash, isFast, operation.Weapon))
         {
-            // GClass2016.Start calls FirearmsAnimator.Reload(bool b), so we need to skip the reload animation and do our own crossfade.
+            // ReloadExternalMagOperation.Start calls FirearmsAnimator.Reload(bool b), so we need to skip the reload animation and do our own crossfade.
             // But if it's a swap reload, no need to skip the reload animation, it's not called by the insert mag operation.
             if (!isSwap)
             {
@@ -111,39 +91,34 @@ public static class AnimationUtil
         }
         else if (isSwap && operation.FirearmsAnimator.GetBoltCatch())
         {
-            // Special case: For weapons such as the SKS with an empty mag and no bullet in the chamber,
+            // Special case: For weapons such as the SKS with an empty mag, no bullet in the chamber, with its bolt caught,
             // don't do crossfade and instead play the reload animation.
             operation.FirearmsAnimator.PullOutMagInInventoryMode();
             operation.FirearmsAnimator.ResetInsertMagInInventoryMode();
         }
     }
 
-    private static bool TryGetReloadOutHash(this UnityAnimatorWrapper unityAnimator, out int reloadOutHash, bool isFast = false, Weapon weapon = null)
+    private static bool TryGetReloadOutHash(
+        this UnityAnimatorWrapper unityAnimator,
+        out int reloadOutHash,
+        bool isFast = false,
+        Weapon weapon = null
+    )
     {
         var currentStateHash = unityAnimator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
-        if (currentStateHash == _magCheckHash)
+        if (currentStateHash == HashLookup.ChamberCatchCheckHash)
         {
-            reloadOutHash = isFast ? _magReloadOutFastHash : _magReloadOutHash;
-            return true;
-        }
-        if (currentStateHash == _magWithInternalCheckHash)
-        {
-            reloadOutHash = isFast ? _magWithInternalReloadOutFastHash : _magWithInternalReloadOutHash;
-            return true;
-        }
-        if (currentStateHash == _magCheckValHash)
-        {
-            reloadOutHash = isFast ? _magReloadOutFastHash : _magReloadOutValHash;
-            return true;
-        }
-        if (currentStateHash == _chamberCatchCheckHash)
-        {
-            reloadOutHash = _chamberCatchReloadStartHash;
+            // Special case: For weapons such as the SKS, with its bolt caught
+            reloadOutHash = HashLookup.ChamberCatchReloadStartHash;
             return false;
+        }
+        if (HashLookup.TryGetReloadOutHash(currentStateHash, isFast, out reloadOutHash))
+        {
+            return true;
         }
 
         L.Error(
-            $"Unsupported mag check hash: {AnimationControllerStatesTable.GetAnimStateByNameHash(currentStateHash)} ({currentStateHash}) for weapon: {weapon?.ToFullString()}"
+            $"Unsupported mag check hash: {AnimationControllerStatesTable.GetAnimStateByNameHash(currentStateHash)} ({currentStateHash}) (isFast: {isFast}) for weapon: {weapon?.ToFullString()}"
         );
         reloadOutHash = -1;
         return false;

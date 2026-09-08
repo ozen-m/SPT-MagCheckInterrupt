@@ -60,6 +60,7 @@ public class FloatingPanelController : MonoBehaviour
         controller._panel = panel;
         controller._cameraTransform = CameraManager.Instance._camera.transform;
         controller._onFinish = controller.AnimationFinished; // Cache the action
+        controller.gameObject.SetActive(false);
 
         return controller;
     }

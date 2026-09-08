@@ -1,4 +1,5 @@
-﻿using EFT.InventoryLogic;
+﻿using System.Collections.Generic;
+using EFT.InventoryLogic;
 using MagCheckInterrupt.Components;
 using MagCheckInterrupt.Patches;
 using UnityEngine;
@@ -23,6 +24,8 @@ public static class AnimationUtil
     private static readonly int _chamberCatchCheckHash = Animator.StringToHash("CHECK CHAMBER CATCHED");
     private static readonly int _chamberCatchReloadStartHash = Animator.StringToHash("RELOAD CATCH START");
 
+    private static readonly HashSet<int> _magCheckHashes = [_magCheckHash, _magWithInternalCheckHash, _magCheckValHash, _chamberCatchCheckHash];
+
     public static void ShowAmmoDetails(FirearmController controller)
     {
         if (ConfigUtil.FloatingAmmoDetails.Value)
@@ -46,10 +49,16 @@ public static class AnimationUtil
             AmmoDetailsPatch.HideAmmoCount();
         }
     }
-    
+
     public static float GetNormalizedTime(this ObjectInHandsAnimator objectInHandsAnimator, int layerIndex)
     {
         return objectInHandsAnimator.Animator.GetCurrentAnimatorStateInfo(layerIndex).normalizedTime;
+    }
+
+    public static bool IsMagazineCheckAnimation(this ObjectInHandsAnimator objectInHandsAnimator)
+    {
+        var currentStateHash = objectInHandsAnimator.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).shortNameHash;
+        return _magCheckHashes.Contains(currentStateHash);
     }
 
     /// <summary>

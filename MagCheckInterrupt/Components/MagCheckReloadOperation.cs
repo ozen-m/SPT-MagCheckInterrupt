@@ -31,7 +31,20 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override void Update(float deltaTime)
     {
-        if (State != EOperationState.Ready) return;
+        if (State == EOperationState.Executing)
+        {
+            // Some weapons don't immediately start with the check animation, so check and set Ready here
+            if (FirearmsAnimator.IsMagazineCheckAnimation())
+            {
+                State = EOperationState.Ready;
+            }
+            return;
+        }
+
+        if (State != EOperationState.Ready)
+        {
+            return;
+        }
 
         var normalizedTime = FirearmsAnimator.GetNormalizedTime(FirearmsAnimator.HANDS_LAYER_INDEX);
 
@@ -89,8 +102,6 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override void OnUtilityOperationStartEvent()
     {
-        base.OnUtilityOperationStartEvent();
-
         if (!Player.FirstPersonPointOfView || ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Press) return;
 
         if (KeybindsUtil.AreCheckAndReloadKeysConflicting())

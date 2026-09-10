@@ -13,6 +13,7 @@ public static class HashLookup
         [Animator.StringToHash("CHECK")] = Animator.StringToHash("RELOAD OUT"),
         [Animator.StringToHash("CHECK MAG")] = Animator.StringToHash("RELOAD OUT MAG"),
         [1180283072] = 905331964, // WTT-Content Backport AS Val Mod4
+        [Animator.StringToHash("MAG CHECK")] = Animator.StringToHash("RELOAD OUT"), // WTT-Armory FN Evolys
     };
 
     private static readonly Dictionary<int, int> _checkToReloadOutFast = new()
@@ -20,6 +21,7 @@ public static class HashLookup
         [Animator.StringToHash("CHECK")] = Animator.StringToHash("RELOAD OUT ALL"),
         [Animator.StringToHash("CHECK MAG")] = Animator.StringToHash("RELOAD OUT ALL MAG"),
         [1180283072] = Animator.StringToHash("RELOAD OUT ALL"), // WTT-Content Backport AS Val Mod4
+        [Animator.StringToHash("MAG CHECK")] = Animator.StringToHash("RELOAD OUT ALL"), // WTT-Armory FN Evolys
     };
 
     private static readonly HashSet<int> _magCheckHashes = [.. _checkToReloadOut.Keys, ChamberCatchCheckHash];

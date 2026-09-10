@@ -68,10 +68,28 @@ public static class FikaHandler
             return;
         }
 
-        var packet = new ReloadCalledPacket(networkManager.NetId);
+        var packet = new MagCheckPacket(networkManager.NetId, MagCheckPacket.CheckPacketType.ReloadCalled);
         networkManager.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
 
-        L.Debug("Fika::SendReloadCalledPacket Packet sent ");
+        L.Debug("FikaHandler::SendReloadCalledPacket Packet sent");
+    }
+
+    /// <summary>
+    /// Send a packet to restore the speed to other clients, when SetTriggerPressed(true) is called
+    /// </summary>
+    /// <seealso cref="MagCheckReloadOperation.SetTriggerPressed"/>
+    public static void SendTriggerPressedPacket()
+    {
+        var networkManager = Singleton<IFikaNetworkManager>.Instance;
+        if (networkManager is null)
+        {
+            return;
+        }
+
+        var packet = new MagCheckPacket(networkManager.NetId, MagCheckPacket.CheckPacketType.RestoreSpeed);
+        networkManager.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
+
+        L.Debug("FikaHandler::SendTriggerPressedPacket Packet sent");
     }
 
     public static bool IsObservedAI(Player player)
@@ -98,7 +116,7 @@ public static class FikaHandler
                 break;
         }
 
-        eventArgs.Manager.RegisterPacket(new Action<ReloadCalledPacket>(OnReceiveReloadCalledPacket));
+        eventArgs.Manager.RegisterPacket(new Action<MagCheckPacket>(OnReceiveMagazineCheckPacket));
         _cachedConfigValues = ConfigUtil.GetConfigValues();
     }
 
@@ -134,9 +152,9 @@ public static class FikaHandler
         _configReceivedFromHost = ConfigUtil.SetConfigValues(packet.Config);
     }
 
-    private static void OnReceiveReloadCalledPacket(ReloadCalledPacket packet)
+    private static void OnReceiveMagazineCheckPacket(MagCheckPacket packet)
     {
-        L.Debug("Fika::OnReceiveReloadCalledPacket Received ReloadCalledPacket");
+        L.Debug($"FikaHandler::OnReceiveMagazineCheckPacket Received MagazineCheckPacket {packet.Type}");
 
         if (!CoopHandler.TryGetCoopHandler(out var coopHandler))
         {
@@ -155,9 +173,15 @@ public static class FikaHandler
             return;
         }
 
-        operation.SetReloadCalled();
-
-        L.Debug("Fika::OnReceiveReloadCalledPacket SetReloadCalled");
+        switch (packet.Type)
+        {
+            case MagCheckPacket.CheckPacketType.ReloadCalled:
+                operation.SetReloadCalled();
+                return;
+            case MagCheckPacket.CheckPacketType.RestoreSpeed:
+                operation.RestoreSpeed();
+                return;
+        }
     }
 
     private static void OnHostSettingsChanged(object sender, SettingChangedEventArgs eventArgs)

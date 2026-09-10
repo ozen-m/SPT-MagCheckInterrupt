@@ -1,6 +1,7 @@
 ﻿using Comfort.Common;
 using Diz.LanguageExtensions;
 using EFT.InventoryLogic;
+using MagCheckInterrupt.External;
 using MagCheckInterrupt.Patches;
 using MagCheckInterrupt.Utils;
 using UnityEngine;
@@ -80,8 +81,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
                 _animSpeedState = SpeedState.Slowed;
                 break;
             case SpeedState.Slowed when normalizedTime >= ConfigUtil.SlowAnimationEnd.Value:
-                _targetSpeed = 1f;
-                _animSpeedState = SpeedState.Restored;
+                RestoreSpeed();
                 break;
         }
 
@@ -258,8 +258,12 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
             return;
         }
 
-        _targetSpeed = 1f;
-        _animSpeedState = SpeedState.Restored;
+        RestoreSpeed();
+
+        if (FikaHandler.IsPresent)
+        {
+            FikaHandler.SendTriggerPressedPacket();
+        }
     }
 
     public override void FastForward()
@@ -304,6 +308,12 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
         {
             ReloadConflictPatch.SkipReload();
         }
+    }
+
+    public void RestoreSpeed()
+    {
+        _targetSpeed = 1f;
+        _animSpeedState = SpeedState.Restored;
     }
 
     public void SetReloadCalled()

@@ -31,9 +31,9 @@ public static class AnimationUtil
         }
     }
 
-    public static float GetNormalizedTime(this ObjectInHandsAnimator objectInHandsAnimator, int layerIndex)
+    public static float GetHandsNormalizedTime(this ObjectInHandsAnimator objectInHandsAnimator)
     {
-        return objectInHandsAnimator.Animator.GetCurrentAnimatorStateInfo(layerIndex).normalizedTime;
+        return objectInHandsAnimator.Animator.GetCurrentAnimatorStateInfo(FirearmsAnimator.HANDS_LAYER_INDEX).normalizedTime;
     }
 
     public static bool IsMagazineCheckAnimation(this ObjectInHandsAnimator objectInHandsAnimator)

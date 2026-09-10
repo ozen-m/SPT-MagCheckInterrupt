@@ -46,7 +46,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
             return;
         }
 
-        var normalizedTime = FirearmsAnimator.GetNormalizedTime(FirearmsAnimator.HANDS_LAYER_INDEX);
+        var normalizedTime = FirearmsAnimator.GetHandsNormalizedTime();
 
         if (Player.FirstPersonPointOfView)
         {
@@ -123,7 +123,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
             return false;
         }
 
-        var normalizedTime = FirearmsAnimator.GetNormalizedTime(FirearmsAnimator.HANDS_LAYER_INDEX);
+        var normalizedTime = FirearmsAnimator.GetHandsNormalizedTime();
         return normalizedTime > ConfigUtil.ReloadWindowStart.Value && normalizedTime < ConfigUtil.ReloadWindowEnd.Value;
     }
 

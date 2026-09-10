@@ -22,11 +22,11 @@ public static class HashLookup
         [1180283072] = Animator.StringToHash("RELOAD OUT ALL"), // WTT-Content Backport AS Val Mod4
     };
 
-    private static readonly HashSet<int> MagCheckHashes = [.. _checkToReloadOut.Keys, ChamberCatchCheckHash];
+    private static readonly HashSet<int> _magCheckHashes = [.. _checkToReloadOut.Keys, ChamberCatchCheckHash];
 
     public static bool IsMagazineCheckAnimation(int hash)
     {
-        return MagCheckHashes.Contains(hash);
+        return _magCheckHashes.Contains(hash);
     }
 
     public static bool TryGetReloadOutHash(int checkHash, bool isFast, out int reloadOutHash)

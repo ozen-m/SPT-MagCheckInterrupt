@@ -105,6 +105,7 @@
     <ItemGroup>
       <OutputDLL Include="$(TargetPath)" />
       <OutputDLL Include="$(TargetDir)$(TargetName).pdb" />
+      <OutputDLL Include="..\LICENSE" />
     </ItemGroup>
   </Target>
 </Project>

@@ -10,6 +10,7 @@ namespace MagCheckInterrupt.Components;
 
 public class MagCheckReloadOperation(FirearmController controller) : UtilityOperation(controller)
 {
+    private bool _inCheckAnimation;
     private bool _reloadCalled;
     private AddSuboperation _swapAddSuboperation;
     private AmmoDetailsState _ammoDetailsState = AmmoDetailsState.NotShown;
@@ -32,18 +33,10 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override void Update(float deltaTime)
     {
-        if (State == EOperationState.Executing)
+        // Some weapons don't immediately start with the check animation
+        if (!_inCheckAnimation)
         {
-            // Some weapons don't immediately start with the check animation, so check and set Ready here
-            if (FirearmsAnimator.IsMagazineCheckAnimation())
-            {
-                State = EOperationState.Ready;
-            }
-            return;
-        }
-
-        if (State != EOperationState.Ready)
-        {
+            _inCheckAnimation = FirearmsAnimator.IsMagazineCheckAnimation();
             return;
         }
 
@@ -92,6 +85,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override void Reset()
     {
+        _inCheckAnimation = false;
         _reloadCalled = false;
         _swapAddSuboperation = null;
         _ammoDetailsState = AmmoDetailsState.NotShown;
@@ -105,6 +99,8 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override void OnUtilityOperationStartEvent()
     {
+        base.OnUtilityOperationStartEvent();
+
         if (!Player.FirstPersonPointOfView || ConfigUtil.ReloadMode.Value != KeybindsUtil.EReloadMode.Press)
         {
             return;
@@ -118,7 +114,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
 
     public override bool CanStartReload()
     {
-        if (State != EOperationState.Ready)
+        if (!_inCheckAnimation)
         {
             return false;
         }
@@ -285,11 +281,7 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
     public override void OnIdleStartEvent()
     {
         L.Debug("MagCheckReloadOperation::OnIdleStartEvent");
-        if (State != EOperationState.Ready)
-        {
-            L.Error($"Unsupported magazine check hash for weapon: {Weapon.ToFullString()}");
-            State = EOperationState.Ready;
-        }
+
         base.OnIdleStartEvent();
 
         if (!Player.FirstPersonPointOfView)
@@ -307,6 +299,18 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
         if (KeybindsUtil.AreCheckAndReloadKeysConflicting())
         {
             ReloadConflictPatch.SkipReload();
+        }
+    }
+
+    public override void OnEnd()
+    {
+        base.OnEnd();
+
+        if (!_inCheckAnimation)
+        {
+            // Magazine check hash was not recognized
+            L.Error($"Unrecognized magazine check hash for weapon: {Weapon.ToFullString()}");
+            AmmoDetailsPatch.ShowLastAmmoDetails();
         }
     }
 

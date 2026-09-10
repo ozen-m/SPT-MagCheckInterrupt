@@ -1,5 +1,6 @@
 ﻿using EFT.InventoryLogic;
 using MagCheckInterrupt.Components;
+using MagCheckInterrupt.External;
 using MagCheckInterrupt.Patches;
 
 namespace MagCheckInterrupt.Utils;
@@ -66,9 +67,9 @@ public static class AnimationUtil
         // We don't want observed players re-sending packets and
         // our packet needs to be sent first before Fika's reload packet (ReloadMag.startCallback).
         // But if it's a swap reload, no need to send a packet.
-        if (!isSwap && External.Fika.IsPresent)
+        if (!isSwap && FikaHandler.IsPresent)
         {
-            External.Fika.SendReloadCalledPacket();
+            FikaHandler.SendReloadCalledPacket();
         }
 
         HideAmmoDetails();

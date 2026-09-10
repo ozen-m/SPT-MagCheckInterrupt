@@ -2,6 +2,7 @@
 using EFT;
 using EFT.InventoryLogic;
 using MagCheckInterrupt.Components;
+using MagCheckInterrupt.External;
 using MagCheckInterrupt.Utils;
 using SPT.Reflection.Patching;
 
@@ -20,7 +21,11 @@ public class RunUtilityOpPatch : ModulePatch
     [PatchPrefix]
     public static bool Prefix(Idling __instance, UtilityOperation.EUtilityType utilityType)
     {
-        if (utilityType != UtilityOperation.EUtilityType.CheckMagazine || __instance.Player.IsAI)
+        if (
+            utilityType != UtilityOperation.EUtilityType.CheckMagazine
+            || __instance.Player.IsAI
+            || FikaHandler.IsObservedAI(__instance.Player)
+        )
         {
             return true;
         }

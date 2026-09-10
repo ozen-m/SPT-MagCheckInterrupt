@@ -4,6 +4,7 @@ using Comfort.Common;
 using EFT;
 using EFT.Communications;
 using Fika.Core.Main.Components;
+using Fika.Core.Main.Players;
 using Fika.Core.Main.Utils;
 using Fika.Core.Modding;
 using Fika.Core.Modding.Events;
@@ -15,7 +16,7 @@ using MagCheckInterrupt.Utils;
 
 namespace MagCheckInterrupt.External;
 
-public static class Fika
+public static class FikaHandler
 {
     public static bool IsPresent { get; private set; }
 
@@ -71,6 +72,16 @@ public static class Fika
         networkManager.SendData(ref packet, DeliveryMethod.ReliableOrdered, true);
 
         L.Debug("Fika::SendReloadCalledPacket Packet sent ");
+    }
+
+    public static bool IsObservedAI(Player player)
+    {
+        return IsPresent && IsObservedAIInternal(player);
+    }
+
+    private static bool IsObservedAIInternal(Player player)
+    {
+        return player is FikaPlayer { IsObservedAI: true };
     }
 
     #region HANDLERS

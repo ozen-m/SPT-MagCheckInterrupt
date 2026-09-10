@@ -27,7 +27,7 @@ public class MagCheckInterrupt : BaseUnityPlugin
 
         if (Chainloader.PluginInfos.ContainsKey("com.fika.core"))
         {
-            External.Fika.Init();
+            FikaHandler.Init();
         }
         if (Chainloader.PluginInfos.ContainsKey("com.tyfon.uifixes"))
         {
@@ -46,7 +46,7 @@ public class MagCheckInterrupt : BaseUnityPlugin
 
     protected void OnApplicationQuit()
     {
-        External.Fika.RestoreConfig();
+        FikaHandler.RestoreConfig();
     }
 
 #if DEBUG
@@ -66,7 +66,7 @@ public class MagCheckInterrupt : BaseUnityPlugin
         }
         if (Chainloader.PluginInfos.ContainsKey("com.fika.core"))
         {
-            External.Fika.Disable();
+            FikaHandler.Disable();
         }
 
         _patchManager?.DisablePatches();

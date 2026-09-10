@@ -153,7 +153,7 @@ public static class ConfigUtil
         SlowAnimationEnd = _configFile.Bind(
             "Slow Animation",
             "End",
-            0.4f,
+            0.45f,
             new ConfigDescription(
                 "When to restore speed of the magazine check animation, in normalized time",
                 new AcceptableValueRange<float>(0f, 1f),

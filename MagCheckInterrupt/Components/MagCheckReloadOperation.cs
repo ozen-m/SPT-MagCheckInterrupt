@@ -243,6 +243,25 @@ public class MagCheckReloadOperation(FirearmController controller) : UtilityOper
         FirearmsAnimator.SetInventory(opened);
     }
 
+    public override void SetTriggerPressed(bool pressed)
+    {
+        if (!pressed)
+        {
+            return;
+        }
+        if (!ConfigUtil.SlowAnimation.Value)
+        {
+            return;
+        }
+        if (_animSpeedState == SpeedState.Restored)
+        {
+            return;
+        }
+
+        _targetSpeed = 1f;
+        _animSpeedState = SpeedState.Restored;
+    }
+
     public override void FastForward()
     {
         // Fika runs FastForward before calling ReloadMag,
